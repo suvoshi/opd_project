@@ -1,0 +1,19 @@
+{{ define "index.html" }}
+
+<div class="add-grade-form">
+    <h2>Поставить оценку</h2>
+    <!-- HTMX магия остается той же -->
+    <form hx-post="/grade/add" hx-target="#grades-container" hx-swap="innerHTML">
+        <input type="text" name="subject" placeholder="Предмет" required>
+        <input type="number" name="student_id" placeholder="ID Ученика" required>
+        <input type="number" name="value" placeholder="Оценка (2-5)" min="2" max="5" required>
+        <button type="submit">Добавить</button>
+    </form>
+</div>
+
+<div id="grades-container">
+    <!-- Загружаем таблицу при загрузке страницы -->
+    <div hx-get="/grades" hx-trigger="load"></div>
+</div>
+
+{{ end }}
