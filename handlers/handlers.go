@@ -3,9 +3,9 @@ package handlers
 import (
 	"html/template"
 	"net/http"
-	"opd_project/config"
-	"opd_project/models"
-	"strconv"
+	// "opd_project/config"
+	// "opd_project/models"
+	// "strconv"
 )
 
 // Глобальная переменная для шаблонов (чтобы не компилировать их каждый раз)
@@ -28,36 +28,36 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 // Получение таблицы оценок (для HTMX)
 func GetGradesHandler(w http.ResponseWriter, r *http.Request) {
-	var grades []models.Grade
-	// Preload подгружает связанные данные (имя ученика)
-	config.DB.Preload("Student").Find(&grades)
+	// var grades []models.Grade
+	// // Preload подгружает связанные данные (имя ученика)
+	// config.DB.Preload("Student").Find(&grades)
 
-	// Рендерим только фрагмент таблицы
-	templates.ExecuteTemplate(w, "grades-table.html", grades)
+	// // Рендерим только фрагмент таблицы
+	// templates.ExecuteTemplate(w, "grades-table.html", grades)
 }
 
 // Добавление оценки (для HTMX)
 func AddGradeHandler(w http.ResponseWriter, r *http.Request) {
-	// Принимаем данные только через POST
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+	// // Принимаем данные только через POST
+	// if r.Method != http.MethodPost {
+	// 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	// 	return
+	// }
 
-	// Парсим форму (аналог c.PostForm в Gin)
-	r.ParseForm()
+	// // Парсим форму (аналог c.PostForm в Gin)
+	// r.ParseForm()
 
-	studentID, _ := strconv.ParseUint(r.FormValue("student_id"), 10, 32)
-	value, _ := strconv.Atoi(r.FormValue("value"))
-	subject := r.FormValue("subject")
+	// studentID, _ := strconv.ParseUint(r.FormValue("student_id"), 10, 32)
+	// value, _ := strconv.Atoi(r.FormValue("value"))
+	// subject := r.FormValue("subject")
 
-	grade := models.Grade{
-		StudentID: uint(studentID),
-		Value:     value,
-		Subject:   subject,
-	}
-	config.DB.Create(&grade)
+	// grade := models.Grade{
+	// 	StudentID: uint(studentID),
+	// 	Value:     value,
+	// 	Subject:   subject,
+	// }
+	// config.DB.Create(&grade)
 
-	// Возвращаем обновленную таблицу (HTMX заменит её на странице)
-	GetGradesHandler(w, r)
+	// // Возвращаем обновленную таблицу (HTMX заменит её на странице)
+	// GetGradesHandler(w, r)
 }
