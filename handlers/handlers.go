@@ -13,17 +13,43 @@ var templates *template.Template
 
 // InitTemplates загружает все HTML шаблоны при старте
 func InitTemplates() {
-	templates = template.Must(template.ParseGlob("templates/**/*.html"))
+	templates = template.Must(template.ParseFiles(
+		"templates/index.html",
+		"templates/personal_account.html",
+		"templates/my_group.html",
+		"templates/schedule.html",
+		"templates/discipline_progress.html",
+		"templates/partials/grades-table.html",
+	))
 }
 
-// Главная страница
+// Главная страница - Дашборд
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
-	// Рендерим шаблон с именем "base.html"
-	templates.ExecuteTemplate(w, "base.html", nil)
+	templates.ExecuteTemplate(w, "index", nil)
+}
+
+// Личный кабинет
+func PersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
+	templates.ExecuteTemplate(w, "personal_account", nil)
+}
+
+// Моя группа
+func MyGroupHandler(w http.ResponseWriter, r *http.Request) {
+	templates.ExecuteTemplate(w, "my_group", nil)
+}
+
+// Расписание
+func ScheduleHandler(w http.ResponseWriter, r *http.Request) {
+	templates.ExecuteTemplate(w, "schedule", nil)
+}
+
+// Успеваемость
+func DisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
+	templates.ExecuteTemplate(w, "discipline_progress", nil)
 }
 
 // Получение таблицы оценок (для HTMX)

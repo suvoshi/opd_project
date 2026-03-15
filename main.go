@@ -25,9 +25,11 @@ func main() {
 	handlers.InitTemplates()
 
 	// 3. Настройка роутов (Маршрутизация)
-
-	// Главная страница
 	http.HandleFunc("/", handlers.IndexHandler)
+	http.HandleFunc("/personal_account/", handlers.PersonalAccountHandler)
+	http.HandleFunc("/my_group/", handlers.MyGroupHandler)
+	http.HandleFunc("/schedule/", handlers.ScheduleHandler)
+	http.HandleFunc("/discipline_progress/", handlers.DisciplineProgressHandler)
 
 	// API для HTMX
 	http.HandleFunc("/grades", handlers.GetGradesHandler)
