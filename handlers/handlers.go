@@ -1,20 +1,30 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"html/template"
 	"net/http"
-	// "opd_project/config"
-	// "opd_project/models"
+	"opd_project/config"
+	"opd_project/models"
+	"time"
 	// "strconv"
 )
 
 // Глобальная переменная для шаблонов (чтобы не компилировать их каждый раз)
 var templates *template.Template
 
+func generateSessionID() string {
+	b := make([]byte, 32)
+	rand.Read(b)
+	return base64.URLEncoding.EncodeToString(b)
+}
+
 // InitTemplates загружает все HTML шаблоны при старте
 func InitTemplates() {
 	templates = template.Must(template.ParseFiles(
 		"templates/index.html",
+		"templates/login.html",
 		"templates/personal_account.html",
 		"templates/my_group.html",
 		"templates/schedule.html",
@@ -29,7 +39,17 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	// cookie, err := r.Cookie("session_id")
+	// if err != nil {
+	// 	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	// 	return
+	// }
 	templates.ExecuteTemplate(w, "index", nil)
+}
+
+// Авторизация
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	templates.ExecuteTemplate(w, "login", nil)
 }
 
 // Личный кабинет
@@ -53,6 +73,26 @@ func DisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Получение таблицы оценок (для HTMX)
+func GetLoginSession(w http.ResponseWriter, r *http.Request) {
+	// TODO: сделать сессии через запрос к UserID (сессии для разных пользователей)
+	sessionID := generateSessionID()
+	session := models.Session{
+		SessionID: sessionID,
+		UserID:    1,
+		ExpiresAt: time.Now().Add(24 * time.Hour),
+	}
+	config.DB.Create(&session)
+	cookie := &http.Cookie{
+		Name:     "session_id",
+		Value:    sessionID,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,                   // Поменять на true
+		SameSite: http.SameSiteStrictMode, // Защита от CSRF
+	}
+	http.SetCookie(w, cookie)
+}
+
 func GetGradesHandler(w http.ResponseWriter, r *http.Request) {
 	// var grades []models.Grade
 	// // Preload подгружает связанные данные (имя ученика)

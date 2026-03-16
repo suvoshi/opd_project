@@ -90,3 +90,9 @@ type StudentEndDiscipline struct {
 	Grade             int       `gorm:"not null"`
 	Date              time.Time `gorm:"type:date;not null"`
 }
+
+type Session struct {
+	SessionID string    `gorm:"column:session_id;not null;unique"`
+	UserID    int       `gorm:"column:id_user;not null;unique"`
+	ExpiresAt time.Time `gorm:"not null"`
+}
