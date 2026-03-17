@@ -3,11 +3,15 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"html/template"
 	"net/http"
 	"opd_project/config"
 	"opd_project/models"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	// "strconv"
 )
 
@@ -39,11 +43,11 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	// cookie, err := r.Cookie("session_id")
-	// if err != nil {
-	// 	http.Redirect(w, r, "/login", http.StatusSeeOther)
-	// 	return
-	// }
+	_, err := r.Cookie("session_id")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
 	templates.ExecuteTemplate(w, "index", nil)
 }
 
@@ -72,16 +76,45 @@ func DisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "discipline_progress", nil)
 }
 
-// Получение таблицы оценок (для HTMX)
+// Для HTMX
+// Вход в приложение
 func GetLoginSession(w http.ResponseWriter, r *http.Request) {
-	// TODO: сделать сессии через запрос к UserID (сессии для разных пользователей)
+	// разобраться с возвратом кодов ошибок
+	login := r.FormValue("login")
+	pswd := r.FormValue("password")
+
+	var user models.User
+	result := config.DB.Where("login = ?", login).First(&user)
+	if result.Error != nil {
+		// здесь и далее
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`<div class="error">Неверный email или пароль</div>`))
+		return
+	}
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pswd))
+	if err != nil {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`<div class="error">Неверный email или пароль</div>`))
+		return
+	}
 	sessionID := generateSessionID()
 	session := models.Session{
 		SessionID: sessionID,
-		UserID:    1,
+		UserID:    user.ID,
 		ExpiresAt: time.Now().Add(24 * time.Hour),
 	}
-	config.DB.Create(&session)
+	result = config.DB.Create(&session)
+	for result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			sessionID = generateSessionID()
+			session.SessionID = sessionID
+			result = config.DB.Create(&session)
+		} else {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`<div class="error">Ошибка сервера</div>`))
+			return
+		}
+	}
 	cookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    sessionID,
@@ -91,6 +124,7 @@ func GetLoginSession(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode, // Защита от CSRF
 	}
 	http.SetCookie(w, cookie)
+	w.Header().Set("HX-Redirect", "/")
 }
 
 func GetGradesHandler(w http.ResponseWriter, r *http.Request) {

@@ -1,17 +1,29 @@
 {{ define "login" }}
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Электронный журнал</title>
-    <!-- HTMX через CDN -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { font-family: Arial; max-width: 400px; margin: 50px auto; }
+        input { width: 100%; padding: 8px; margin: 5px 0; }
+        .error { color: red; }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Вход</h1>
-    </header>
+    <h2>Вход на сайт</h2>
+    
+    <!-- Самая простая форма - вообще без JavaScript! -->
+    <form hx-post="/login_session"
+          hx-target="#error-message"
+          hx-trigger="submit">
+        
+        <input type="email" name="login" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Пароль" required>
+        <button type="submit">Войти</button>
+    </form>
+    
+    <!-- Сюда будет приходить сообщение об ошибке -->
+    <div id="error-message" class="error"></div>
 </body>
 </html>
 {{ end }}
