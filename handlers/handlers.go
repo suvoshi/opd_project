@@ -34,6 +34,7 @@ func InitTemplates() {
 		"templates/schedule.html",
 		"templates/discipline_progress.html",
 		"templates/partials/grades-table.html",
+		"templates/partials/error.html",
 	))
 }
 
@@ -43,7 +44,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	_, err := r.Cookie("session_id")
+	_, err := r.Cookie("id_session")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
@@ -58,12 +59,42 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 // Личный кабинет
 func PersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "personal_account", nil)
+	cookie, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	var session models.Session
+	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	if result != nil {
+	}
+	var student models.Student
+	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
+	if result != nil {
+	}
+	templates.ExecuteTemplate(w, "personal_account", student)
 }
 
 // Моя группа
 func MyGroupHandler(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "my_group", nil)
+	cookie, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	var session models.Session
+	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	if result != nil {
+	}
+	var student models.Student
+	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
+	if result != nil {
+	}
+	var students []models.Student
+	result = config.DB.Where("id_group = ?", student.GroupID).Find(&students)
+	if result != nil {
+	}
+	templates.ExecuteTemplate(w, "my_group", students)
 }
 
 // Расписание
@@ -86,15 +117,12 @@ func GetLoginSession(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	result := config.DB.Where("login = ?", login).First(&user)
 	if result.Error != nil {
-		// здесь и далее
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`<div class="error">Неверный email или пароль</div>`))
+		templates.ExecuteTemplate(w, "error", "Неверный email или пароль")
 		return
 	}
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pswd))
 	if err != nil {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`<div class="error">Неверный email или пароль</div>`))
+		templates.ExecuteTemplate(w, "error", "Неверный email или пароль")
 		return
 	}
 	sessionID := generateSessionID()
@@ -110,13 +138,12 @@ func GetLoginSession(w http.ResponseWriter, r *http.Request) {
 			session.SessionID = sessionID
 			result = config.DB.Create(&session)
 		} else {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`<div class="error">Ошибка сервера</div>`))
+			templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
 			return
 		}
 	}
 	cookie := &http.Cookie{
-		Name:     "session_id",
+		Name:     "id_session",
 		Value:    sessionID,
 		Path:     "/",
 		HttpOnly: true,

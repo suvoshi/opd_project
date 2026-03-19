@@ -92,7 +92,7 @@ type StudentEndDiscipline struct {
 }
 
 type Session struct {
-	SessionID string    `gorm:"column:session_id;not null;unique"`
+	SessionID string    `gorm:"column:id_session;not null;unique"`
 	UserID    int       `gorm:"column:id_user;not null;unique"`
 	ExpiresAt time.Time `gorm:"not null"`
 }
