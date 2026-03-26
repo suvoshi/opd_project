@@ -29,16 +29,18 @@ func InitTemplates() {
 	templates = template.Must(template.ParseFiles(
 		"templates/index.html",
 		"templates/login.html",
-		"templates/personal_account.html",
-		"templates/my_group.html",
-		"templates/schedule.html",
-		"templates/discipline_progress.html",
+		"templates/student/student.html",
+		"templates/student/personal_account.html",
+		"templates/student/my_group.html",
+		"templates/student/schedule.html",
+		"templates/student/discipline_progress.html",
 		"templates/partials/grades-table.html",
 		"templates/partials/error.html",
 	))
 }
 
-// Главная страница - Дашборд
+// Основные страницы
+// Главная страница - пока свободна
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
@@ -52,64 +54,24 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "index", nil)
 }
 
-// Авторизация
+// Страница авторизации
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "login", nil)
 }
 
-// Личный кабинет
-func PersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("id_session")
+// Страница студента
+func StudentHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("id_session")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	var session models.Session
-	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
-	if result != nil {
-	}
-	var student models.Student
-	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
-	if result != nil {
-	}
-	templates.ExecuteTemplate(w, "personal_account", student)
-}
-
-// Моя группа
-func MyGroupHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("id_session")
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
-	var session models.Session
-	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
-	if result != nil {
-	}
-	var student models.Student
-	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
-	if result != nil {
-	}
-	var students []models.Student
-	result = config.DB.Where("id_group = ?", student.GroupID).Find(&students)
-	if result != nil {
-	}
-	templates.ExecuteTemplate(w, "my_group", students)
-}
-
-// Расписание
-func ScheduleHandler(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "schedule", nil)
-}
-
-// Успеваемость
-func DisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "discipline_progress", nil)
+	templates.ExecuteTemplate(w, "student", nil)
 }
 
 // Для HTMX
 // Вход в приложение
-func GetLoginSession(w http.ResponseWriter, r *http.Request) {
+func TryLogin(w http.ResponseWriter, r *http.Request) {
 	// разобраться с возвратом кодов ошибок
 	login := r.FormValue("login")
 	pswd := r.FormValue("password")
@@ -151,7 +113,68 @@ func GetLoginSession(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode, // Защита от CSRF
 	}
 	http.SetCookie(w, cookie)
-	w.Header().Set("HX-Redirect", "/")
+	// добавить редирект на остальные роли
+	switch user.Role {
+	case models.RoleStudent:
+		w.Header().Set("HX-Redirect", "/student")
+	default:
+		w.Header().Set("HX-Redirect", "/")
+	}
+}
+
+// Личный кабинет
+func PersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	var session models.Session
+	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	if result != nil {
+		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+	}
+	var student models.Student
+	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
+	if result != nil {
+		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+	}
+	templates.ExecuteTemplate(w, "personal_account", student)
+}
+
+// Моя группа
+func MyGroupHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	var session models.Session
+	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	if result != nil {
+		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+	}
+	var student models.Student
+	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
+	if result != nil {
+		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+	}
+	var students []models.Student
+	result = config.DB.Where("id_group = ?", student.GroupID).Find(&students)
+	if result != nil {
+		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+	}
+	templates.ExecuteTemplate(w, "my_group", students)
+}
+
+// Расписание
+func ScheduleHandler(w http.ResponseWriter, r *http.Request) {
+	templates.ExecuteTemplate(w, "error", "Пока нет")
+}
+
+// Успеваемость
+func DisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
+	templates.ExecuteTemplate(w, "error", "Пока нет")
 }
 
 func GetGradesHandler(w http.ResponseWriter, r *http.Request) {

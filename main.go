@@ -28,13 +28,15 @@ func main() {
 	// 3. Настройка роутов (Маршрутизация)
 	http.HandleFunc("/", handlers.IndexHandler)
 	http.HandleFunc("/login/", handlers.LoginHandler)
+	http.HandleFunc("/student/", handlers.StudentHandler)
+
+	// API для HTMX
+	http.HandleFunc("/try_login", handlers.TryLogin)
 	http.HandleFunc("/personal_account/", handlers.PersonalAccountHandler)
 	http.HandleFunc("/my_group/", handlers.MyGroupHandler)
 	http.HandleFunc("/schedule/", handlers.ScheduleHandler)
 	http.HandleFunc("/discipline_progress/", handlers.DisciplineProgressHandler)
 
-	// API для HTMX
-	http.HandleFunc("/login_session", handlers.GetLoginSession)
 	http.HandleFunc("/grades", handlers.GetGradesHandler)
 	http.HandleFunc("/grade/add", handlers.AddGradeHandler)
 
