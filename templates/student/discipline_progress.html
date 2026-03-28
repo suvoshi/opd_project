@@ -1,17 +1,91 @@
 {{ define "discipline_progress" }}
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Электронный журнал</title>
-    <!-- HTMX через CDN -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="C:\Users\vikto\OneDrive\Рабочий стол\website for project\static\css\style.css">
 </head>
 <body>
-    <header>
-        <h1>Успеваемость</h1>
-    </header>
+    <img src="C:\Users\vikto\OneDrive\Рабочий стол\website for project\static\logo_get_full_1.png" 
+         alt="Логотип" 
+         class="photo-on-line">
+
+         <div class="container">
+        <div class="tabs-sidebar">
+            <button class="text-button-alt"
+                    id="btn-first"
+                    onclick="setActiveTab(this)"
+                    hx-get="/schedule"
+                    hx-target="#tab-content"
+                    hx-trigger="click"
+                    hx-indicator="#spinner"
+                    hx-swap="innerHTML">
+                🧾 Доска объявлений
+            </button>
+
+            <button class="text-button-alt"
+                    id="btn-second"
+                    onclick="setActiveTab(this)"
+                    hx-get="/personal_account"           
+                    hx-target="#tab-content"   
+                    hx-trigger="click"
+                    hx-indicator="#spinner"
+                    hx-swap="innerHTML">
+                👤 Личный кабинет
+            </button>
+            
+            <button class="text-button-alt"
+                    id="btn-third"
+                    onclick="setActiveTab(this)"
+                    hx-get="/schedule"
+                    hx-target="#tab-content"
+                    hx-trigger="click"
+                    hx-indicator="#spinner"
+                    hx-swap="innerHTML">
+                📅 Расписание
+            </button>
+
+            <button class="text-button-alt"
+                    id="btn-fourth"
+                    onclick="setActiveTab(this)"
+                    hx-get="/discipline_progress"
+                    hx-target="#tab-content"
+                    hx-trigger="click"
+                    hx-indicator="#spinner"
+                    hx-swap="innerHTML">
+                📖 Дисциплины
+            </button>
+        </div>
+
+        <div class="main-content">
+            <h1>Дисциплины</h1>
+        </div>
+
+        <script>
+        function setActiveTab(button) {
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+        }
+        
+        document.body.addEventListener('htmx:beforeRequest', function(evt) {
+            if (evt.detail.requestConfig.path.startsWith('/tab/')) {
+                const contentDiv = document.getElementById('tab-content');
+                contentDiv.classList.add('content-loading');
+            }
+        });
+        
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            if (evt.detail.requestConfig.path.startsWith('/tab/')) {
+                const contentDiv = document.getElementById('tab-content');
+                contentDiv.classList.remove('content-loading');
+            }
+        });
+    </script>
 </body>
 </html>
 {{ end }}

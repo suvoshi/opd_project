@@ -1,136 +1,83 @@
-{{define "student"}}
+{{ define student }}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Вкладки с HTMX</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Электронный журнал</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-        }
-        
-        .container {
-            display: flex;
-            max-width: 1200px;
-            margin: 50px auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        /* Левая панель с вкладками */
-        .tabs-sidebar {
-            width: 250px;
-            background: #2c3e50;
-            color: white;
-        }
-        
-        .tab-button {
-            width: 100%;
-            padding: 15px 20px;
-            background: none;
-            border: none;
-            color: white;
-            text-align: left;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
-            border-bottom: 1px solid #34495e;
-        }
-        
-        .tab-button:hover {
-            background: #34495e;
-        }
-        
-        .tab-button.active {
-            background: #3498db;
-        }
-        
-        /* Правая панель с содержимым */
-        .content-area {
-            flex: 1;
-            padding: 30px;
-            background: white;
-            min-height: 500px;
-        }
-        
-        /* Индикатор загрузки */
-        .htmx-indicator {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            color: #3498db;
-        }
-        
-        .htmx-request .htmx-indicator {
-            display: block;
-        }
-        
-        .content-loading {
-            opacity: 0.5;
-            transition: opacity 0.3s;
-        }
-        
-        /* Стили для содержимого */
-        .content-card {
-            animation: fadeIn 0.3s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+    <link rel="stylesheet" href="C:\Users\vikto\OneDrive\Рабочий стол\website for project\static\css\style.css">
 </head>
 <body>
+    <img src="C:\Users\vikto\OneDrive\Рабочий стол\website for project\static\logo_get_full_1.png" 
+         alt="Логотип" 
+         class="photo-on-line">
+
     <div class="container">
-        <!-- Левая панель с кнопками-вкладками -->
         <div class="tabs-sidebar">
-            <button class="tab-button active" 
+            <button class="text-button-alt"
+                    id="btn-first"
+                    onclick="setActiveTab(this)"
+                    hx-get="/student"
+                    hx-target="#tab-content"
+                    hx-trigger="click"
+                    hx-indicator="#spinner"
+                    hx-swap="innerHTML">
+                🧾 Доска объявлений
+            </button>
+
+            <button class="text-button-alt"
+                    id="btn-second"
                     onclick="setActiveTab(this)"
                     hx-get="/personal_account"           
                     hx-target="#tab-content"   
                     hx-trigger="click"
                     hx-indicator="#spinner"
-                    hx-swap="innerHTML">      <!-- Как вставить -->
-                📊 Личный кабинет
+                    hx-swap="innerHTML">
+                👤 Личный кабинет
             </button>
             
-            <button class="tab-button" 
+            <button class="text-button-alt"
+                    id="btn-third"
                     onclick="setActiveTab(this)"
                     hx-get="/schedule"
                     hx-target="#tab-content"
                     hx-trigger="click"
                     hx-indicator="#spinner"
                     hx-swap="innerHTML">
-                📝 Расписание
+                📅 Расписание
+            </button>
+
+            <button class="text-button-alt"
+                    id="btn-fourth"
+                    onclick="setActiveTab(this)"
+                    hx-get="/discipline_progress"
+                    hx-target="#tab-content"
+                    hx-trigger="click"
+                    hx-indicator="#spinner"
+                    hx-swap="innerHTML">
+                📖 Дисциплины
             </button>
         </div>
-        
-        <!-- Правая панель с содержимым -->
-        <div class="content-area">
-            <!-- Индикатор загрузки -->
-            <div id="spinner" class="htmx-indicator">
-                ⏳ Загрузка содержимого...
+            
+        <div class="main-content">
+            <h1>📚 Электронный журнал</h1>
+            <p>Добро пожаловать в систему электронного журнала. Нажмите на кнопки слева для просмотра информации.</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                
+                <h3>Ближайшие уроки:</h3> 
+                <table>
+                    <tr><th>Время</th><th>Предмет</th><th>Аудитория</th></tr>
+                    <tr><td>08:30</td><td>Математика</td><td>101</td></tr>
+                    <tr><td>10:00</td><td>Физика</td><td>205</td></tr>
+                    <tr><td>11:30</td><td>Литература</td><td>312</td></tr>
+                </table>
             </div>
             
-            <!-- Контейнер для содержимого вкладки -->
-            <div id="tab-content">
-                <!-- Начальное содержимое -->
-                <div class="content-card">
-                    <h2>Добро пожаловать!</h2>
-                    <p>Нажмите на любую вкладку слева, чтобы загрузить содержимое.</p>
-                    <p>Это демонстрация работы HTMX с динамическими вкладками.</p>
-                </div>
-            </div>
+            <p style="color: #666; margin-top: 20px; font-size: 14px;">
+                * Для просмотра подробной информации используйте кнопки на левой панели
+            </p>
         </div>
     </div>
     
@@ -162,4 +109,4 @@
     </script>
 </body>
 </html>
-{{end}}
+{{ end }}

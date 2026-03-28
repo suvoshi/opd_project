@@ -1,83 +1,168 @@
-* {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-        }
-        
-        .container {
-            display: flex;
-            max-width: 1200px;
-            margin: 50px auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        /* Левая панель с вкладками */
-        .tabs-sidebar {
-            width: 250px;
-            background: #2c3e50;
-            color: white;
-        }
-        
-        .tab-button {
-            width: 100%;
-            padding: 15px 20px;
-            background: none;
-            border: none;
-            color: white;
-            text-align: left;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
-            border-bottom: 1px solid #34495e;
-        }
-        
-        .tab-button:hover {
-            background: #34495e;
-        }
-        
-        .tab-button.active {
-            background: #3498db;
-        }
-        
-        /* Правая панель с содержимым */
-        .content-area {
-            flex: 1;
-            padding: 30px;
-            background: white;
-            min-height: 500px;
-        }
-        
-        /* Индикатор загрузки */
-        .htmx-indicator {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            color: #3498db;
-        }
-        
-        .htmx-request .htmx-indicator {
-            display: block;
-        }
-        
-        .content-loading {
-            opacity: 0.5;
-            transition: opacity 0.3s;
-        }
-        
-        /* Стили для содержимого */
-        .content-card {
-            animation: fadeIn 0.3s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+/* Основные стили */
+body {
+    position: relative;
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+/* Вертикальная полоса */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 350px;
+    height: 100%;
+    background: linear-gradient(135deg, #014770be 0%, #014770 100%);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+}
+
+/* Фото на полосе */
+.photo-on-line {
+    position: absolute;
+    top: 30px; /* Отступ сверху, где будет висеть фото */
+    left: 25px;	
+    width: 300px; /* Ширина фото */
+    height: 98px; /* Высота фото */
+    object-fit: cover; /* Чтобы фото не искажалось */
+    z-index: 2; /* Чтобы фото было выше полосы */
+}
+
+/* Базовые стили для всех текстовых кнопок */
+.text-button-alt {
+    position: absolute;
+    left: 25px;
+    width: 300px;
+    background: transparent;
+    border: 2px solid transparent;
+    padding: 12px 15px;
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: left;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    z-index: 3;
+}
+
+/* Позиции для разных кнопок */
+#btn-first {
+    top: 130px;
+}
+
+#btn-second {
+    top: 180px;
+}
+
+#btn-third {
+    top: 230px;
+}
+
+#btn-fourth {
+    top: 280px;
+}
+
+/* Эффекты при наведении */
+.text-button-alt:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.15);
+    padding-left: 20px;
+}
+
+/* Эффект при нажатии */
+.text-button-alt:active {
+    transform: scale(0.98);
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Фокус для доступности */
+.text-button-alt:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Основной контент справа от полосы */
+.main-content {
+    margin-left: 370px;
+    padding: 30px;
+    background-color: #f9f9f9;
+    min-height: calc(100vh - 60px);
+    border-radius: 10px 0 0 0;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Стили для таблиц в контенте */
+.main-content table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 600px;
+    margin: 20px 0;
+}
+
+.main-content th {
+    background-color: #6E6C78;
+    color: white;
+    padding: 10px;
+}
+
+.main-content td {
+    padding: 8px 10px;
+    background-color: white;
+}
+
+.main-content tr:nth-child(even) td {
+    background-color: #f2f2f2;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    body::before {
+        width: 100%;
+        height: 120px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .photo-on-line {
+        position: absolute;
+        top: 20px; /* Отступ сверху, где будет висеть фото */
+			  left: 25px;	
+        width: 300px; /* Ширина фото */
+        height: 98px; /* Высота фото */
+        object-fit: cover; /* Чтобы фото не искажалось */
+        z-index: 2; /* Чтобы фото было выше полосы */
+    }
+    
+    .text-button-alt {
+        top: auto;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: auto;
+        white-space: nowrap;
+    }
+    
+    #btn-second {
+        top: auto;
+        bottom: 60px;
+    }
+    
+    #btn-first {
+        top: auto;
+        bottom: 110px;
+    }
+    
+    #btn-third {
+        top: auto;
+        bottom: 160px;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding-top: 130px;
+    }
+}
