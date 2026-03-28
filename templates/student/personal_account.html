@@ -1,17 +1,10 @@
 {{ define "personal_account" }}
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Электронный журнал</title>
-    <!-- HTMX через CDN -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header>
-        <h1>Личный кабинет</h1>
-    </header>
-</body>
-</html>
+<h1>{{ .LastName }}</h1>
+<h1>{{ .FirstName }}</h1>
+<h1>{{ .Patronymic }}</h1>
+<h1>{{ .GroupSign }}</h1>
+<h1>{{ .BirthDate }}</h1>
+{{range .Students}}
+<p>{{ .LastName }} {{.FirstName}}</p>
+{{end}}
 {{ end }}

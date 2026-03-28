@@ -124,6 +124,7 @@ func TryLogin(w http.ResponseWriter, r *http.Request) {
 
 // Личный кабинет
 func PersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
+	// Обо мне
 	cookie, err := r.Cookie("id_session")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -131,40 +132,44 @@ func PersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var session models.Session
 	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
-	if result != nil {
+	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
 	}
 	var student models.Student
 	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
-	if result != nil {
+	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
 	}
-	templates.ExecuteTemplate(w, "personal_account", student)
-}
+	var group models.Group
+	result = config.DB.Where("id = ?", student.GroupID).First(&group)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+	}
 
-// Моя группа
-func MyGroupHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("id_session")
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
-	var session models.Session
-	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
-	if result != nil {
-		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
-	}
-	var student models.Student
-	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
-	if result != nil {
-		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
-	}
+	// Моя группа
 	var students []models.Student
-	result = config.DB.Where("id_group = ?", student.GroupID).Find(&students)
-	if result != nil {
+	result = config.DB.Where("id_group = ? AND id != ?", student.GroupID, student.ID).Find(&students)
+	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
 	}
-	templates.ExecuteTemplate(w, "my_group", students)
+
+	data := struct {
+		LastName   string
+		FirstName  string
+		Patronymic string
+		BirthDate  time.Time
+		GroupSign  string
+		Students   []models.Student
+	}{
+		student.LastName,
+		student.FirstName,
+		student.Patronymic,
+		student.BirthDate,
+		group.GroupSign,
+		students,
+	}
+
+	templates.ExecuteTemplate(w, "personal_account", data)
 }
 
 // Расписание
