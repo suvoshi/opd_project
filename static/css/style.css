@@ -87,7 +87,7 @@ body::before {
 }
 
 /* Основной контент справа от полосы */
-.main-content {
+.tab-content {
     margin-left: 370px;
     padding: 30px;
     background-color: #f9f9f9;
@@ -97,25 +97,25 @@ body::before {
 }
 
 /* Стили для таблиц в контенте */
-.main-content table {
+.tab-content table {
     border-collapse: collapse;
     width: 100%;
     max-width: 600px;
     margin: 20px 0;
 }
 
-.main-content th {
+.tab-content th {
     background-color: #6E6C78;
     color: white;
     padding: 10px;
 }
 
-.main-content td {
+.tab-content td {
     padding: 8px 10px;
     background-color: white;
 }
 
-.main-content tr:nth-child(even) td {
+.tab-content tr:nth-child(even) td {
     background-color: #f2f2f2;
 }
 
@@ -161,7 +161,7 @@ body::before {
         bottom: 160px;
     }
     
-    .main-content {
+    .tab-content {
         margin-left: 0;
         padding-top: 130px;
     }

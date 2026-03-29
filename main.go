@@ -32,9 +32,10 @@ func main() {
 
 	// API для HTMX
 	http.HandleFunc("/try_login", handlers.TryLogin)
-	http.HandleFunc("/personal_account/", handlers.PersonalAccountHandler)
-	http.HandleFunc("/schedule/", handlers.ScheduleHandler)
-	http.HandleFunc("/discipline_progress/", handlers.DisciplineProgressHandler)
+	http.HandleFunc("/student/personal_account/", handlers.PersonalAccountHandler)
+	http.HandleFunc("/student/schedule/", handlers.ScheduleHandler)
+	http.HandleFunc("/student/discipline_progress/", handlers.DisciplineProgressHandler)
+	http.HandleFunc("/student/dashboard/", handlers.DashboardHandler)
 
 	http.HandleFunc("/grades", handlers.GetGradesHandler)
 	http.HandleFunc("/grade/add", handlers.AddGradeHandler)
