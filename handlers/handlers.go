@@ -15,6 +15,10 @@ import (
 	// "strconv"
 )
 
+// Сообщение об ошибках, потом подкорректировать
+var errorServerSide = "Проблемы на сервере, вернитесь позже"
+var incorrectEmailOrLogin = "Неправильный email или логин"
+
 // Глобальная переменная для шаблонов (чтобы не компилировать их каждый раз)
 var templates *template.Template
 
@@ -34,8 +38,7 @@ func InitTemplates() {
 		"templates/student/schedule.html",
 		"templates/student/discipline_progress.html",
 		"templates/student/dashboard.html",
-		"templates/partials/grades-table.html",
-		"templates/partials/error.html",
+		"templates/error.html",
 	))
 }
 
@@ -79,12 +82,12 @@ func TryLogin(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	result := config.DB.Where("login = ?", login).First(&user)
 	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", "Неверный email или пароль")
+		templates.ExecuteTemplate(w, "error", incorrectEmailOrLogin)
 		return
 	}
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pswd))
 	if err != nil {
-		templates.ExecuteTemplate(w, "error", "Неверный email или пароль")
+		templates.ExecuteTemplate(w, "error", incorrectEmailOrLogin)
 		return
 	}
 	sessionID := generateSessionID()
@@ -100,7 +103,7 @@ func TryLogin(w http.ResponseWriter, r *http.Request) {
 			session.SessionID = sessionID
 			result = config.DB.Create(&session)
 		} else {
-			templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+			templates.ExecuteTemplate(w, "error", errorServerSide)
 			return
 		}
 	}
@@ -122,157 +125,139 @@ func TryLogin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Дашборд
+func StudentDashboardHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") == "true" {
+		err := templates.ExecuteTemplate(w, "dashboard", nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	} else {
+		// что здесь происходит?
+		http.Redirect(w, r, "/student/", http.StatusSeeOther)
+	}
+}
+
 // Личный кабинет
-func PersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
-	// Обо мне
+func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("id_session")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+	// Получение данных о студенте
 	var session models.Session
 	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
 	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+		templates.ExecuteTemplate(w, "error", errorServerSide)
 	}
 	var student models.Student
-	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
+	result = config.DB.
+		Preload("Group").
+		Where("id_user = ?", session.UserID).
+		First(&student)
 	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
-	}
-	var group models.Group
-	result = config.DB.Where("id = ?", student.GroupID).First(&group)
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+		templates.ExecuteTemplate(w, "error", errorServerSide)
 	}
 
-	// Моя группа
+	// Группа (все, кроме студента, сделавшего запрос)
 	var students []models.Student
 	result = config.DB.Where("id_group = ? AND id != ?", student.GroupID, student.ID).Find(&students)
 	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+		templates.ExecuteTemplate(w, "error", errorServerSide)
 	}
 
+	// Отдаем ответ
 	data := struct {
-		LastName   string
-		FirstName  string
-		Patronymic string
-		BirthDate  time.Time
-		GroupSign  string
-		Students   []models.Student
+		Student  models.Student
+		Students []models.Student
 	}{
-		student.LastName,
-		student.FirstName,
-		student.Patronymic,
-		student.BirthDate,
-		group.GroupSign,
-		students,
+		Student:  student,
+		Students: students,
 	}
 
 	templates.ExecuteTemplate(w, "personal_account", data)
 }
 
-// Dashboard
-func DashboardHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("HX-Request") == "true" {
-		err := templates.ExecuteTemplate(w, "dashboard.html", nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	} else {
-		http.Redirect(w, r, "/student/", http.StatusSeeOther)
+// Расписание
+func StudentScheduleHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") != "true" {
+		// потом сделать обработку такого запроса
 	}
+	_, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	templates.ExecuteTemplate(w, "schedule", nil)
 }
 
-// Расписание (ВИТЯ)
-func ScheduleHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("HX-Request") == "true" {
-		err := templates.ExecuteTemplate(w, "schedule.html", nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	} else {
-		http.Redirect(w, r, "/student/", http.StatusSeeOther)
+// Расписание - по дням недели
+func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") != "true" {
+		// потом сделать обработку такого запроса
 	}
+	cookie, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// находим студента
+	var session models.Session
+	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+	}
+	var student models.Student
+	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+	}
+
+	r.ParseForm()
+	// всегда понедельник и воскресенье соответственно
+	start, _ := time.Parse("2006-01-02", r.FormValue("start"))
+	//end, _ := time.Parse("2006-01-02", r.FormValue("end"))
+
+	weekLessons := make([][]models.Lesson, 0, 7)
+	point1 := start
+	point2 := start.Add(24 * time.Hour)
+
+	for ind := 0; ind < 7; ind++ {
+		var lessons []models.Lesson
+		result = config.DB.
+			Preload("Discipline").
+			Preload("Actions", "id_student = ?", student.ID).
+			Where("id_group = ? AND (? < date_begin AND date_end < ?)", student.GroupID, point1, point2).
+			Order("date_begin").
+			Find(&lessons)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+		weekLessons[ind] = lessons
+		point1, point2 = point2, point2.Add(24*time.Hour)
+	}
+
+	data := struct {
+		WeekLessons [][]models.Lesson
+	}{
+		WeekLessons: weekLessons,
+	}
+
+	templates.ExecuteTemplate(w, "schedule_part", data)
 }
-
-// Расписание (ГЛЕБ)
-// func ScheduleHandler(w http.ResponseWriter, r *http.Request) {
-// 	// cookie, err := r.Cookie("id_session")
-// 	// if err != nil {
-// 	// 	http.Redirect(w, r, "/login", http.StatusSeeOther)
-// 	// 	return
-// 	// }
-
-// 	// now := time.Now()
-// 	// offset := int(time.Monday - now.Weekday())
-// 	// if offset > 0 {
-// 	// 	offset -= 7
-// 	// }
-
-// 	// // Начало недели (понедельник, 00:00:00)
-// 	// start = date.AddDate(0, 0, offset).Truncate(24 * time.Hour)
-
-// 	// // Конец недели (воскресенье, 23:59:59.999999999)
-// 	// end = start.AddDate(0, 0, 7).Add(-time.Nanosecond)
-
-// 	// var session models.Session
-// 	// result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
-// 	// if result.Error != nil {
-// 	// 	templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
-// 	// }
-// 	// var student models.Student
-// 	// result = config.DB.Where("id_user = ?", session.UserID).First(&student)
-// 	// if result.Error != nil {
-// 	// 	templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
-// 	// }
-// 	templates.ExecuteTemplate(w, "error", "Пока нет")
-
-// }
 
 // Успеваемость
-func DisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
+func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") == "true" {
-		err := templates.ExecuteTemplate(w, "discipline_progress.html", nil)
+		err := templates.ExecuteTemplate(w, "discipline_progress", nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	} else {
 		http.Redirect(w, r, "/student/", http.StatusSeeOther)
 	}
-}
-
-func GetGradesHandler(w http.ResponseWriter, r *http.Request) {
-	// var grades []models.Grade
-	// // Preload подгружает связанные данные (имя ученика)
-	// config.DB.Preload("Student").Find(&grades)
-
-	// // Рендерим только фрагмент таблицы
-	// templates.ExecuteTemplate(w, "grades-table.html", grades)
-}
-
-// Добавление оценки (для HTMX)
-func AddGradeHandler(w http.ResponseWriter, r *http.Request) {
-	// // Принимаем данные только через POST
-	// if r.Method != http.MethodPost {
-	// 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	// 	return
-	// }
-
-	// // Парсим форму (аналог c.PostForm в Gin)
-	// r.ParseForm()
-
-	// studentID, _ := strconv.ParseUint(r.FormValue("student_id"), 10, 32)
-	// value, _ := strconv.Atoi(r.FormValue("value"))
-	// subject := r.FormValue("subject")
-
-	// grade := models.Grade{
-	// 	StudentID: uint(studentID),
-	// 	Value:     value,
-	// 	Subject:   subject,
-	// }
-	// config.DB.Create(&grade)
-
-	// // Возвращаем обновленную таблицу (HTMX заменит её на странице)
-	// GetGradesHandler(w, r)
 }

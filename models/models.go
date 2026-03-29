@@ -32,6 +32,8 @@ type User struct {
 	Login    string   `gorm:"unique;not null"`
 	Password string   `gorm:"not null"`
 	Role     UserRole `gorm:"not null"`
+
+	Student *Student `gorm:"foreignKey:UserID"`
 }
 
 type Student struct {
@@ -42,6 +44,10 @@ type Student struct {
 	FirstName  string `gorm:"not null"`
 	Patronymic string
 	BirthDate  time.Time `gorm:"type:date;not null"`
+
+	User    User     `gorm:"foreignKey:UserID"`
+	Group   Group    `gorm:"foreignKey:GroupID"`
+	Actions []Action `gorm:"foreignKey:StudentID"`
 }
 
 type Lesson struct {
@@ -51,6 +57,10 @@ type Lesson struct {
 	Description  string
 	DateBegin    time.Time `gorm:"not null"`
 	DateEnd      time.Time `gorm:"not null"`
+
+	Group      Group      `gorm:"foreignKey:GroupID"`
+	Discipline Discipline `gorm:"foreignKey:DisciplineID"`
+	Actions    []Action   `gorm:"foreignKey:LessonID"`
 }
 
 type Group struct {
@@ -58,6 +68,10 @@ type Group struct {
 	GroupSign string    `gorm:"unique"`
 	DateBegin time.Time `gorm:"not null"`
 	DateEnd   time.Time `gorm:"not null"`
+
+	Students         []Student         `gorm:"foreignKey:GroupID"`
+	Lessons          []Lesson          `gorm:"foreignKey:GroupID"`
+	GroupDisciplines []GroupDiscipline `gorm:"foreignKey:GroupID"`
 }
 
 type Discipline struct {
@@ -65,6 +79,9 @@ type Discipline struct {
 	Name        string `gorm:"not null"`
 	Hours       int
 	TypePerform DisciplineTypePerform `gorm:"not null"`
+
+	Lessons          []Lesson          `gorm:"foreignKey:DisciplineID"`
+	GroupDisciplines []GroupDiscipline `gorm:"foreignKey:DisciplineID"`
 }
 
 type GroupDiscipline struct {
@@ -73,6 +90,9 @@ type GroupDiscipline struct {
 	DisciplineID int       `gorm:"column:id_discipline;not null"`
 	DateBegin    time.Time `gorm:"type:date;not null"`
 	DateEnd      time.Time `gorm:"type:date;not null"`
+
+	Group      Group      `gorm:"foreignKey:GroupID"`
+	Discipline Discipline `gorm:"foreignKey:DisciplineID"`
 }
 
 type Action struct {
@@ -81,6 +101,9 @@ type Action struct {
 	StudentID  int `gorm:"column:id_student;not null"`
 	Grade      int `gorm:"check:grade BETWEEN 2 AND 5"`
 	Attendance AttendanceType
+
+	Lesson  Lesson  `gorm:"foreignKey:LessonID"`
+	Student Student `gorm:"foreignKey:StudentID"`
 }
 
 type StudentEndDiscipline struct {
@@ -89,10 +112,15 @@ type StudentEndDiscipline struct {
 	StudentID         int       `gorm:"column:id_student;not null"`
 	Grade             int       `gorm:"not null"`
 	Date              time.Time `gorm:"type:date;not null"`
+
+	GroupDiscipline GroupDiscipline `gorm:"foreignKey:GroupDisciplineID"`
+	Student         Student         `gorm:"foreignKey:StudentID"`
 }
 
 type Session struct {
 	SessionID string    `gorm:"column:id_session;not null;unique"`
 	UserID    int       `gorm:"column:id_user;not null"`
 	ExpiresAt time.Time `gorm:"not null"`
+
+	User User `gorm:"foreignKey:UserID"`
 }

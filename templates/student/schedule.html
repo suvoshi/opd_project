@@ -1,3 +1,194 @@
-<div>
-    <h1>Расписание</h1>
+{{define "schedule"}}
+<style>
+    .week-selector {
+        font-family: Arial, sans-serif;
+    }
+    .week-selector .selector {
+        background: #f0f0f0;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .week-selector .date-input {
+        margin: 15px 0;
+    }
+    .week-selector .date-input label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .week-selector input[type="date"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    .week-selector .week-info {
+        background: #e7f3ff;
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+    .week-selector button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .week-selector button:hover {
+        background: #0056b3;
+    }
+    .week-selector .result {
+        background: #fff;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-top: 20px;
+        min-height: 100px;
+    }
+    .week-selector .error {
+        color: red;
+        background: #fee;
+        padding: 10px;
+        border-radius: 4px;
+    }
+    .week-selector .loading {
+        text-align: center;
+        margin: 10px;
+    }
+</style>
+
+<div class="week-selector">
+    <h2>📅 Выбор недели</h2>
+    
+    <div class="selector">
+        <div class="date-input">
+            <label>Выберите любой день недели:</label>
+            <input type="date" class="datePicker">
+        </div>
+        
+        <div class="weekInfo">
+            Неделя будет вычислена автоматически
+        </div>
+        
+        <button hx-post="/student/schedule/part/"
+                hx-target=".result"
+                hx-trigger="click"
+                hx-indicator=".loading"
+                hx-vals='js:getWeekData(this)'>
+            📋 Показать расписание
+        </button>
+    </div>
+    
+    <div class="loading" style="display: none;">
+        ⏳ Загрузка...
+    </div>
+    
+    <div class="result">
+        Выберите день в календаре и нажмите кнопку
+    </div>
 </div>
+
+<script>
+    // Функция для инициализации конкретного экземпляра
+    function initWeekSelector(container) {
+        const datePicker = container.querySelector('.datePicker');
+        const weekInfo = container.querySelector('.weekInfo');
+        const loading = container.querySelector('.loading');
+        const result = container.querySelector('.result');
+        
+        // Устанавливаем сегодняшнюю дату
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        datePicker.value = `${yyyy}-${mm}-${dd}`;
+        
+        function getWeekDatesFromDate(date) {
+            const selectedDate = new Date(date);
+            const dayOfWeek = selectedDate.getDay();
+            const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            
+            const monday = new Date(selectedDate);
+            monday.setDate(selectedDate.getDate() - daysToMonday);
+            monday.setHours(0, 0, 0, 0);
+            
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            
+            return { start: monday, end: sunday };
+        }
+        
+        function formatDate(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        
+        function formatDisplayDate(date) {
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const yyyy = date.getFullYear();
+            return `${dd}.${mm}.${yyyy}`;
+        }
+        
+        function getWeekNumber(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        }
+        
+        function updateWeekInfo() {
+            const selectedDate = datePicker.value;
+            if (!selectedDate) return;
+            
+            const { start, end } = getWeekDatesFromDate(selectedDate);
+            const weekNumber = getWeekNumber(start);
+            
+            weekInfo.innerHTML = `
+                <strong>📅 Выбранная неделя:</strong> Неделя ${weekNumber}, ${start.getFullYear()}<br>
+                <strong>📆 Период:</strong> ${formatDisplayDate(start)} — ${formatDisplayDate(end)}
+            `;
+        }
+        
+        // Глобальная функция для HTMX
+        window.getWeekData = function(btn) {
+            const container = btn.closest('.week-selector');
+            const datePicker = container.querySelector('.datePicker');
+            const selectedDate = datePicker.value;
+            
+            if (!selectedDate) {
+                alert('Пожалуйста, выберите дату');
+                return { start: '', end: '' };
+            }
+            
+            const { start, end } = getWeekDatesFromDate(selectedDate);
+            
+            return {
+                start: formatDate(start),
+                end: formatDate(end)
+            };
+        };
+        
+        datePicker.addEventListener('change', updateWeekInfo);
+        updateWeekInfo();
+    }
+    
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.week-selector').forEach(initWeekSelector);
+    });
+    
+    // Для динамически добавляемых элементов (через HTMX)
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.querySelector('.week-selector')) {
+            initWeekSelector(evt.detail.target.querySelector('.week-selector'));
+        }
+    });
+</script>
+{{end}}

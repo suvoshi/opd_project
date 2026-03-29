@@ -32,13 +32,12 @@ func main() {
 
 	// API для HTMX
 	http.HandleFunc("/try_login", handlers.TryLogin)
-	http.HandleFunc("/student/personal_account/", handlers.PersonalAccountHandler)
-	http.HandleFunc("/student/schedule/", handlers.ScheduleHandler)
-	http.HandleFunc("/student/discipline_progress/", handlers.DisciplineProgressHandler)
-	http.HandleFunc("/student/dashboard/", handlers.DashboardHandler)
 
-	http.HandleFunc("/grades", handlers.GetGradesHandler)
-	http.HandleFunc("/grade/add", handlers.AddGradeHandler)
+	http.HandleFunc("/student/dashboard/", handlers.StudentDashboardHandler)
+	http.HandleFunc("/student/personal_account/", handlers.StudentPersonalAccountHandler)
+	http.HandleFunc("/student/schedule/", handlers.StudentScheduleHandler)
+	http.HandleFunc("/student/schedule/part/", handlers.StudentSchedulePartHandler)
+	http.HandleFunc("/student/discipline_progress/", handlers.StudentDisciplineProgressHandler)
 
 	// 4. Раздача статики (CSS, JS, картинки)
 	// Все файлы из папки static будут доступны по пути /static/...
