@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 	"opd_project/config"
@@ -195,6 +196,7 @@ func StudentScheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 // Расписание - по дням недели
 func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("part active")
 	if r.Header.Get("HX-Request") != "true" {
 		// потом сделать обработку такого запроса
 	}
