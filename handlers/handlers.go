@@ -31,7 +31,6 @@ func InitTemplates() {
 		"templates/login.html",
 		"templates/student/student.html",
 		"templates/student/personal_account.html",
-		"templates/student/my_group.html",
 		"templates/student/schedule.html",
 		"templates/student/discipline_progress.html",
 		"templates/partials/grades-table.html",
@@ -174,7 +173,36 @@ func PersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 
 // Расписание
 func ScheduleHandler(w http.ResponseWriter, r *http.Request) {
+	// cookie, err := r.Cookie("id_session")
+	// if err != nil {
+	// 	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	// 	return
+	// }
+
+	// now := time.Now()
+	// offset := int(time.Monday - now.Weekday())
+	// if offset > 0 {
+	// 	offset -= 7
+	// }
+
+	// // Начало недели (понедельник, 00:00:00)
+	// start = date.AddDate(0, 0, offset).Truncate(24 * time.Hour)
+
+	// // Конец недели (воскресенье, 23:59:59.999999999)
+	// end = start.AddDate(0, 0, 7).Add(-time.Nanosecond)
+
+	// var session models.Session
+	// result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	// if result.Error != nil {
+	// 	templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+	// }
+	// var student models.Student
+	// result = config.DB.Where("id_user = ?", session.UserID).First(&student)
+	// if result.Error != nil {
+	// 	templates.ExecuteTemplate(w, "error", "Проблемы на сервере, вернитесь позже")
+	// }
 	templates.ExecuteTemplate(w, "error", "Пока нет")
+
 }
 
 // Успеваемость
