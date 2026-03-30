@@ -298,9 +298,9 @@ func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 	for ind, groupDisc := range groupDisciplines {
 		var actions []models.Action
 		result = config.DB.
-			Preload("Lesson", "id_discipline = ?", groupDisc.DisciplineID).
-			Where("id_student = ?", student.ID).
-			Order("id").
+			Joins("JOIN lessons ON lessons.id = actions.id_lesson").
+			Where("actions.id_student = ?", student.ID).
+			Where("lessons.id_discipline = ?", groupDisc.DisciplineID).
 			Find(&actions)
 		if result.Error != nil {
 			templates.ExecuteTemplate(w, "error", errorServerSide)
