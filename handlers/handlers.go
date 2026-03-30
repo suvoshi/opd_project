@@ -37,6 +37,7 @@ func InitTemplates() {
 		"templates/student/student.html",
 		"templates/student/personal_account.html",
 		"templates/student/schedule.html",
+		"templates/student/schedule_part.html",
 		"templates/student/discipline_progress.html",
 		"templates/student/dashboard.html",
 		"templates/error.html",
@@ -196,7 +197,7 @@ func StudentScheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 // Расписание - по дням недели
 func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("part active")
+	fmt.Println("StudentSchedulePartHandler start")
 	if r.Header.Get("HX-Request") != "true" {
 		// потом сделать обработку такого запроса
 	}
@@ -223,7 +224,7 @@ func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
 	start, _ := time.Parse("2006-01-02", r.FormValue("start"))
 	//end, _ := time.Parse("2006-01-02", r.FormValue("end"))
 
-	weekLessons := make([][]models.Lesson, 0, 7)
+	weekLessons := make([][]models.Lesson, 7)
 	point1 := start
 	point2 := start.Add(24 * time.Hour)
 
@@ -248,8 +249,11 @@ func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		WeekLessons: weekLessons,
 	}
-
-	templates.ExecuteTemplate(w, "schedule_part", data)
+	fmt.Println("StudentSchedulePartHandler executing")
+	err = templates.ExecuteTemplate(w, "schedule_part", data)
+	if err != nil {
+		fmt.Println("StudentSchedulePartHandler fail executing")
+	}
 }
 
 // Успеваемость

@@ -4,17 +4,22 @@
         {{range $index, $lessons := .WeekLessons}}
         <div class="day-card">
             <!-- Заголовок дня -->
-            <div class="day-header 
-                {{if eq $index 0}}monday{{else if eq $index 1}}tuesday{{else if eq $index 2}}wednesday{{else if eq $index 3}}thursday{{else if eq $index 4}}friday{{else if eq $index 5}}saturday{{else if eq $index 6}}sunday{{end}}">
+            <div class="day-header">
                 <div class="day-name">
-                    {{if eq $index 0}}Понедельник{{else if eq $index 1}}Вторник{{else if eq $index 2}}Среда{{else if eq $index 3}}Четверг{{else if eq $index 4}}Пятница{{else if eq $index 5}}Суббота{{else if eq $index 6}}Воскресенье{{end}}
+                    {{if eq $index 0}}Понедельник
+                    {{else if eq $index 1}}Вторник
+                    {{else if eq $index 2}}Среда
+                    {{else if eq $index 3}}Четверг
+                    {{else if eq $index 4}}Пятница
+                    {{else if eq $index 5}}Суббота
+                    {{else if eq $index 6}}Воскресенье
+                    {{end}}
                 </div>
-                <div class="day-date">{{index $.WeekDates $index}}</div>
             </div>
             
             <!-- Список занятий -->
             <div class="day-lessons">
-                {{if $lessons}}
+                {{if ne (len $lessons) 0}}
                     {{range $lessons}}
                     <div class="lesson-item">
                         <div class="lesson-time">
@@ -28,9 +33,18 @@
                             {{if .Discipline.Hours}}
                                 <span>⏱️ {{.Discipline.Hours}} ч.</span>
                             {{end}}
-                        </div>
-                        <div class="lesson-type {{lessonTypeClass .Discipline.TypePerform}}">
-                            {{.Discipline.TypePerform}}
+                            <span>{{.Discipline.TypePerform}}</span>
+                            <!-- ИСПРАВЛЕНО: проверяем Actions, а не Action -->
+                            {{if .Actions}}
+                                {{$first := index .Actions 0}}
+                                {{if $first.Grade}}
+                                    <span>Оценка: {{$first.Grade}}</span>
+                                {{end}}
+                                <!-- Посещаемость пока цифрой, исправить! -->
+                                {{if $first.Attendance}}
+                                    <span>Посещаемость: {{$first.Attendance}}</span>
+                                {{end}}
+                            {{end}}
                         </div>
                     </div>
                     {{end}}
@@ -92,7 +106,7 @@
     .day-header {
         padding: 16px;
         text-align: center;
-        color: white;
+        color: rgb(0, 0, 0);
     }
 
     .day-name {
