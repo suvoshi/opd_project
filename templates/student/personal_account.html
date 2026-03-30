@@ -2,7 +2,7 @@
 <h1>Личный кабинет</h1>
 <h3>{{ .Student.LastName }} {{ .Student.FirstName }} {{ .Student.Patronymic }}</h3>
 <p>Номер группы: {{ .Student.Group.GroupSign }}</p>
-<p>День рождения: {{ .Student.BirthDate }}</p>
+<p>День рождения: {{ .Student.BirthDate.Format "02.01.2006" }}</p>
 <h1>Моя группа</h1>
 {{range .Students}}
 <p>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</p>

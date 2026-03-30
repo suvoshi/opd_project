@@ -1,5 +1,34 @@
 {{define "discipline_progress"}}
-<div>
-    <h1>Дисциплины</h1>
-</div>
+<table cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+    <thead>
+        <tr style="background-color: #f2f2f2;">
+            <th>Дисциплина</th>
+            <th>Оценки</th>
+            <th>Количество часов</th>
+            <th>Итоговая оценка</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .}}
+        <tr>
+            <td>{{.Discipline.Name}}</td>
+            <td>
+                {{range $index, $action := .Actions}}
+                    
+                {{if $index}}, {{end}}
+                    <strong>{{$action.Grade}}</strong>
+                {{else}}
+                    <em>Нет оценок</em>
+                {{end}}
+            </td>
+            <td>{{.Discipline.Hours}}</td>
+            <td>{{.FinalGrade}}</td>
+        </tr>
+        {{else}}
+        <tr>
+            <td colspan="4" style="text-align: center;">Нет данных</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
 {{end}}

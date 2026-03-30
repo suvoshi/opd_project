@@ -9,11 +9,12 @@ import (
 	"net/http"
 	"opd_project/config"
 	"opd_project/models"
+	"sort"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	// "strconv"
+	//"strconv"
 )
 
 // Сообщение об ошибках, потом подкорректировать
@@ -197,7 +198,6 @@ func StudentScheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 // Расписание - по дням недели
 func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("StudentSchedulePartHandler start")
 	if r.Header.Get("HX-Request") != "true" {
 		// потом сделать обработку такого запроса
 	}
@@ -249,21 +249,86 @@ func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		WeekLessons: weekLessons,
 	}
-	fmt.Println("StudentSchedulePartHandler executing")
-	err = templates.ExecuteTemplate(w, "schedule_part", data)
-	if err != nil {
-		fmt.Println("StudentSchedulePartHandler fail executing")
-	}
+	templates.ExecuteTemplate(w, "schedule_part", data)
 }
 
 // Успеваемость
 func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("HX-Request") == "true" {
-		err := templates.ExecuteTemplate(w, "discipline_progress", nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	} else {
-		http.Redirect(w, r, "/student/", http.StatusSeeOther)
+	if r.Header.Get("HX-Request") != "true" {
+		// потом сделать обработку такого запроса
 	}
+	cookie, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// находим студента
+	var session models.Session
+	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+	}
+	var student models.Student
+	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+	}
+
+	now := time.Now()
+
+	var groupDisciplines []models.GroupDiscipline
+	result = config.DB.
+		Preload("Discipline").
+		Where("(? BETWEEN date_begin AND date_end) AND id_group = ?", now, student.GroupID).
+		Find(&groupDisciplines)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+	}
+	sort.Slice(groupDisciplines, func(i, j int) bool {
+		return groupDisciplines[i].Discipline.Name < groupDisciplines[j].Discipline.Name
+	})
+
+	data := make([]struct {
+		Discipline models.Discipline
+		Actions    []models.Action
+		FinalGrade string
+	}, len(groupDisciplines))
+
+	for ind, groupDisc := range groupDisciplines {
+		var actions []models.Action
+		result = config.DB.
+			Preload("Lesson", "id_discipline = ?", groupDisc.DisciplineID).
+			Where("id_student = ?", student.ID).
+			Order("id").
+			Find(&actions)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+		}
+		count := 0.0
+		sum := 0.0
+
+		for _, action := range actions {
+			count += 1
+			sum += float64(action.Grade)
+		}
+
+		var finalGrade string
+		if count == 0 {
+			finalGrade = "-"
+		} else {
+			finalGrade = fmt.Sprintf("%.2f", sum/count)
+		}
+
+		data[ind] = struct {
+			Discipline models.Discipline
+			Actions    []models.Action
+			FinalGrade string
+		}{
+			Discipline: groupDisc.Discipline,
+			Actions:    actions,
+			FinalGrade: finalGrade,
+		}
+	}
+	templates.ExecuteTemplate(w, "discipline_progress", data)
 }
