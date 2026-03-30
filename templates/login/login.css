@@ -1,0 +1,107 @@
+* {
+    /* ВНЕШНИЙ ОТСТУП и внутр  */
+    margin: 0;
+    padding: 0;
+}
+
+.head {
+    max-width: auto;
+    background-color: #08e8de;
+
+}
+
+.auth-wrapper {
+    position: fixed;
+    top: 50%;                          /* ← вертикальный центр */
+    left: 50%;                         /* ← горизонтальный центр */
+    transform: translate(-50%, -50%);  /* ← сдвиг на половину размера карточки */
+}
+ 
+/* ========================================
+   КАРТОЧКА АВТОРИЗАЦИИ
+   ======================================== */
+.auth-card {
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 18px;
+    padding: 44px 40px 36px;
+    width: 360px;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.22);
+}
+ 
+.auth-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1.4rem;
+    color: #0a2a2a;
+    text-align: center;
+    margin-bottom: 28px;
+}
+ 
+/* ========================================
+   ПОЛЯ ВВОДА
+   ======================================== */
+.auth-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+ 
+.auth-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid #d4eded;
+    border-radius: 12px;
+    font-family: 'Golos Text', sans-serif;
+    font-size: 0.97rem;
+    color: #0a2a2a;
+    outline: none;
+    transition: border-color 0.2s;
+    background: #f7fefe;
+}
+ 
+.auth-input:focus {
+    border-color: #08e8de;
+    background: #ffffff;
+}
+ 
+/* ========================================
+   КНОПКИ
+   ======================================== */
+.auth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+ 
+.btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Golos Text', sans-serif;
+    font-size: 0.97rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+}
+ 
+.btn:active {
+    transform: scale(0.98);
+}
+ 
+/* Основная — «Войти» */
+.btn-primary {
+    background-color: #08c4bb;   /* ← цвет кнопки «Войти» */
+    color: #ffffff;
+}
+ 
+.btn-primary:hover {
+    opacity: 0.88;
+}
+ 
+/* Вторичная — «Зарегистрироваться» */
+.btn-secondary {
+    background-color: transparent;
+    color: #0a2a2a;
+    border: 1.5px solid #08e8de;
+}
