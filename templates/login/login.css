@@ -12,11 +12,14 @@
 
 .auth-wrapper {
     position: fixed;
-    top: 50%;                          /* ← вертикальный центр */
-    left: 50%;                         /* ← горизонтальный центр */
-    transform: translate(-50%, -50%);  /* ← сдвиг на половину размера карточки */
+    top: 50%;
+    /* ← вертикальный центр */
+    left: 50%;
+    /* ← горизонтальный центр */
+    transform: translate(-50%, -50%);
+    /* ← сдвиг на половину размера карточки */
 }
- 
+
 /* ========================================
    КАРТОЧКА АВТОРИЗАЦИИ
    ======================================== */
@@ -27,7 +30,7 @@
     width: 360px;
     box-shadow: 0 12px 48px rgba(0, 0, 0, 0.22);
 }
- 
+
 .auth-title {
     font-family: 'Unbounded', sans-serif;
     font-size: 1.4rem;
@@ -35,7 +38,7 @@
     text-align: center;
     margin-bottom: 28px;
 }
- 
+
 /* ========================================
    ПОЛЯ ВВОДА
    ======================================== */
@@ -45,9 +48,9 @@
     gap: 12px;
     margin-bottom: 24px;
 }
- 
+
 .auth-input {
-    width: 100%;
+    width: 90%;
     padding: 14px 16px;
     border: 1.5px solid #d4eded;
     border-radius: 12px;
@@ -58,12 +61,12 @@
     transition: border-color 0.2s;
     background: #f7fefe;
 }
- 
+
 .auth-input:focus {
     border-color: #08e8de;
     background: #ffffff;
 }
- 
+
 /* ========================================
    КНОПКИ
    ======================================== */
@@ -72,7 +75,7 @@
     flex-direction: column;
     gap: 10px;
 }
- 
+
 .btn {
     width: 100%;
     padding: 14px;
@@ -84,24 +87,34 @@
     cursor: pointer;
     transition: opacity 0.2s, transform 0.1s;
 }
- 
+
 .btn:active {
     transform: scale(0.98);
 }
- 
+
 /* Основная — «Войти» */
 .btn-primary {
-    background-color: #08c4bb;   /* ← цвет кнопки «Войти» */
+    background-color: #08c4bb;
+    /* ← цвет кнопки «Войти» */
     color: #ffffff;
 }
- 
+
 .btn-primary:hover {
     opacity: 0.88;
 }
- 
+
+/* Сообщение об ошибке — приходит с сервера */
+.error {
+    color: red;
+    font-size: 0.88rem;
+    text-align: center;
+    margin-top: 12px;
+    min-height: 20px;
+}
+
 /* Вторичная — «Зарегистрироваться» */
-.btn-secondary {
+/* .btn-secondary {
     background-color: transparent;
     color: #0a2a2a;
     border: 1.5px solid #08e8de;
-}
+} */
