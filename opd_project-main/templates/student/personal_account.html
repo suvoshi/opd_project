@@ -1,0 +1,46 @@
+{{ define "personal_account" }}
+
+<h2 style="margin-left: -25px; margin-top: -85px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Личный кабинет студента</h2>
+
+<div class="container-for-LK">
+    <div class="student-card left" style="margin-top: 20px; padding-top: 5px; padding-bottom: 5px;">
+        <h3>{{ .Student.LastName }} {{ .Student.FirstName }}</h3>
+        <h3>{{ .Student.Patronymic }}</h3>
+    </div>
+
+    <div class="student-card left" style="padding-top: 5px; padding-bottom: 5px;">
+        <p>Номер учебной группы: {{ .Student.Group.GroupSign }}</p>
+        <p>Дата рождения: {{ .Student.BirthDate.Format "02.01.2006" }}</p>
+        <p>Средний балл: 4.8</p>
+        <p>Размер текущей стипендии: 22800 р.</p>
+    </div>
+
+    <div class="student-card tall" style="margin-top: 20px;">
+        <h3 style="margin: 0; text-align: center;">История оценок</h3>
+    </div>
+</div>
+
+<h1 style="margin-top: 75px;">Моя группа</h1>
+{{range .Students}}
+<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding-top: 5px; padding-bottom: 5px;">
+<table>
+    <tr><th>№</th><th>Ф.И.О.</th><th>ДАТА РОЖДЕНИЯ</th></tr>
+    <tr><td>08:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>101</td></tr>
+    <tr><td>10:00</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>205</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+    <tr><td>11:30</td><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>312</td></tr>
+</table>
+</div>
+
+{{end}}
+{{end}}
