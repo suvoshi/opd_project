@@ -21,17 +21,28 @@
 </div>
 
 <h1 style="margin-top: 75px;">Моя группа</h1>
-{{range .Students}}
 <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding-top: 5px; padding-bottom: 5px;">
-<table>
-    <tr>
-        <th>Ф.И.О.</th>
-        <th>ДАТА РОЖДЕНИЯ</th>
-    </tr>
-    <tr><td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td><td>101</td></tr>
-</table>
+    <table cellpadding="8" cellspacing="0" style="border-collapse: collapse; table-layout: auto;">
+        <thead>
+            <tr>
+                <th>Ф.И.О.</th>
+                <th>ДАТА РОЖДЕНИЯ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Students}}
+            <tr>
+                <td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td>
+                <td></td>
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="4" style="text-align: center;">Нет данных</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
 </div>
 
-{{end}}
 {{end}}
