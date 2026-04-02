@@ -6,8 +6,7 @@
 
 .head {
     max-width: auto;
-    background-color: #08e8de;
-
+    background: linear-gradient(135deg, #014770be 0%, #014770 100%);
 }
 
 .auth-wrapper {
@@ -63,7 +62,7 @@
 }
 
 .auth-input:focus {
-    border-color: #08e8de;
+    border-color: #014770;
     background: #ffffff;
 }
 
@@ -94,7 +93,7 @@
 
 /* Основная — «Войти» */
 .btn-primary {
-    background-color: #08c4bb;
+    background-color: #014770;
     /* ← цвет кнопки «Войти» */
     color: #ffffff;
 }

@@ -1,59 +1,106 @@
 {{define "schedule_part"}}
 <div class="schedule-container">
-    <div class="schedule-grid">
-        {{range $index, $lessons := .WeekLessons}}
-        <div class="day-card">
-            <!-- Заголовок дня -->
-            <div class="day-header">
-                <div class="day-name">
-                    {{if eq $index 0}}Понедельник
-                    {{else if eq $index 1}}Вторник
-                    {{else if eq $index 2}}Среда
-                    {{else if eq $index 3}}Четверг
-                    {{else if eq $index 4}}Пятница
-                    {{else if eq $index 5}}Суббота
-                    {{else if eq $index 6}}Воскресенье
-                    {{end}}
-                </div>
-            </div>
-            
-            <!-- Список занятий -->
-            <div class="day-lessons">
-                {{if ne (len $lessons) 0}}
-                    {{range $lessons}}
-                    <div class="lesson-item">
-                        <div class="lesson-time">
-                            {{.DateBegin.Format "15:04"}} - {{.DateEnd.Format "15:04"}}
-                        </div>
-                        <div class="lesson-subject">{{.Discipline.Name}}</div>
-                        <div class="lesson-details">
-                            {{if .Description}}
-                                <span>📝 {{.Description}}</span>
-                            {{end}}
-                            {{if .Discipline.Hours}}
-                                <span>⏱️ {{.Discipline.Hours}} ч.</span>
-                            {{end}}
-                            <span>{{.Discipline.TypePerform}}</span>
-                            <!-- ИСПРАВЛЕНО: проверяем Actions, а не Action -->
-                            {{if .Actions}}
-                                {{$first := index .Actions 0}}
-                                {{if $first.Grade}}
-                                    <span>Оценка: {{$first.Grade}}</span>
-                                {{end}}
-                                <!-- Посещаемость пока цифрой, исправить! -->
-                                {{if $first.Attendance}}
-                                    <span>Посещаемость: {{$first.Attendance}}</span>
-                                {{end}}
+    <div class="two-columns">
+        <div class="column">
+            {{range $index, $lessons := .WeekLessons}}
+                {{if lt $index 3}}
+                <div class="day-card">
+                    <div class="day-header">
+                        <div class="day-name">
+                            {{if eq $index 0}}Понедельник
+                            {{else if eq $index 1}}Вторник
+                            {{else if eq $index 2}}Среда
                             {{end}}
                         </div>
                     </div>
-                    {{end}}
-                {{else}}
-                    <div class="no-lessons">📭 Нет занятий</div>
+                    
+                    <div class="day-lessons">
+                        {{if ne (len $lessons) 0}}
+                            {{range $lessons}}
+                            <div class="lesson-item">
+                                <div class="lesson-time">
+                                    {{.DateBegin.Format "15:04"}} - {{.DateEnd.Format "15:04"}}
+                                </div>
+                                <div class="lesson-subject">{{.Discipline.Name}}</div>
+                                <div class="lesson-details">
+                                    {{if .Description}}
+                                        <span>📝 {{.Description}}</span>
+                                    {{end}}
+                                    {{if .Discipline.Hours}}
+                                        <span>⏱️ {{.Discipline.Hours}} ч.</span>
+                                    {{end}}
+                                    <span>{{.Discipline.TypePerform}}</span>
+                                    {{if .Actions}}
+                                        {{$first := index .Actions 0}}
+                                        {{if $first.Grade}}
+                                            <span>Оценка: {{$first.Grade}}</span>
+                                        {{end}}
+                                        {{if $first.Attendance}}
+                                            <span>Посещаемость: {{$first.Attendance}}</span>
+                                        {{end}}
+                                    {{end}}
+                                </div>
+                            </div>
+                            {{end}}
+                        {{else}}
+                            <div class="no-lessons">Занятий нет, можно отдыхать!</div>
+                        {{end}}
+                    </div>
+                </div>
                 {{end}}
-            </div>
+            {{end}}
         </div>
-        {{end}}
+
+        <div class="column">
+            {{range $index, $lessons := .WeekLessons}}
+                {{if ge $index 3}}
+                <div class="day-card">
+                    <div class="day-header">
+                        <div class="day-name">
+                            {{if eq $index 3}}Четверг
+                            {{else if eq $index 4}}Пятница
+                            {{else if eq $index 5}}Суббота
+                            {{else if eq $index 6}}Воскресенье
+                            {{end}}
+                        </div>
+                    </div>
+                    
+                    <div class="day-lessons">
+                        {{if ne (len $lessons) 0}}
+                            {{range $lessons}}
+                            <div class="lesson-item">
+                                <div class="lesson-time">
+                                    {{.DateBegin.Format "15:04"}} - {{.DateEnd.Format "15:04"}}
+                                </div>
+                                <div class="lesson-subject">{{.Discipline.Name}}</div>
+                                <div class="lesson-details">
+                                    {{if .Description}}
+                                        <span>📝 {{.Description}}</span>
+                                    {{end}}
+                                    {{if .Discipline.Hours}}
+                                        <span>⏱️ {{.Discipline.Hours}} ч.</span>
+                                    {{end}}
+                                    <span>{{.Discipline.TypePerform}}</span>
+                                    {{if .Actions}}
+                                        {{$first := index .Actions 0}}
+                                        {{if $first.Grade}}
+                                            <span>Оценка: {{$first.Grade}}</span>
+                                        {{end}}
+                                        {{if $first.Attendance}}
+                                            <span>Посещаемость: {{$first.Attendance}}</span>
+                                        {{end}}
+                                    {{end}}
+                                </div>
+                            </div>
+                            {{end}}
+                        {{else}}
+                            <div class="no-lessons">Занятий нет, можно отдыхать!</div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            {{end}}
+        </div>
     </div>
 </div>
 
@@ -64,33 +111,23 @@
         border-radius: 16px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         overflow: hidden;
-    }
-
-    .schedule-grid {
-        display: flex;
-        overflow-x: auto;
         padding: 20px;
-        gap: 16px;
-        scrollbar-width: thin;
     }
 
-    .schedule-grid::-webkit-scrollbar {
-        height: 8px;
+    .two-columns {
+        display: flex;
+        gap: 40px;
+        align-items: stretch;
     }
 
-    .schedule-grid::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-
-    .schedule-grid::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
+    .column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 50px;
     }
 
     .day-card {
-        flex: 1;
-        min-width: 300px;
         background: #fff;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -106,27 +143,15 @@
     .day-header {
         padding: 16px;
         text-align: center;
-        color: rgb(0, 0, 0);
+        background: #014770d0;
+        border-bottom: 2px solid #e9ecef;
     }
 
     .day-name {
         font-size: 18px;
         font-weight: bold;
-        margin-bottom: 4px;
+        color: white;
     }
-
-    .day-date {
-        font-size: 14px;
-        opacity: 0.9;
-    }
-
-    .day-header.monday { background: #3498db; }
-    .day-header.tuesday { background: #2ecc71; }
-    .day-header.wednesday { background: #f39c12; }
-    .day-header.thursday { background: #9b59b6; }
-    .day-header.friday { background: #e74c3c; }
-    .day-header.saturday { background: #1abc9c; }
-    .day-header.sunday { background: #e67e22; }
 
     .day-lessons {
         padding: 12px;
@@ -176,22 +201,6 @@
         gap: 4px;
     }
 
-    .lesson-type {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-
-    .lesson-type.lecture { background: #e3f2fd; color: #1976d2; }
-    .lesson-type.practice { background: #e8f5e9; color: #388e3c; }
-    .lesson-type.lab { background: #fff3e0; color: #f57c00; }
-    .lesson-type.seminar { background: #f3e5f5; color: #7b1fa2; }
-    .lesson-type.exam { background: #ffebee; color: #c62828; }
-    .lesson-type.consultation { background: #e8eaf6; color: #3949ab; }
-
     .no-lessons {
         text-align: center;
         padding: 30px;
@@ -200,15 +209,14 @@
     }
 
     @media (max-width: 768px) {
-        .schedule-grid {
+        .two-columns {
+            flex-direction: column;
+        }
+        
+        .schedule-container {
             padding: 15px;
-            gap: 12px;
         }
-
-        .day-card {
-            min-width: 280px;
-        }
-
+        
         .day-name {
             font-size: 16px;
         }

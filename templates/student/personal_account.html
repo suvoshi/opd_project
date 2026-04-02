@@ -1,14 +1,14 @@
 {{ define "personal_account" }}
 
-<h2 style="margin-left: -25px; margin-top: -85px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Личный кабинет студента</h2>
+<h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Личный кабинет студента</h2>
 
 <div class="container-for-LK">
-    <div class="student-card left" style="margin-top: 20px; padding-top: 5px; padding-bottom: 5px;">
+    <div class="student-card left" style="margin-top: 20px;">
         <h3>{{ .Student.LastName }} {{ .Student.FirstName }}</h3>
         <h3>{{ .Student.Patronymic }}</h3>
     </div>
 
-    <div class="student-card left" style="padding-top: 5px; padding-bottom: 5px;">
+    <div class="student-card left">
         <p>Номер учебной группы: {{ .Student.Group.GroupSign }}</p>
         <p>Дата рождения: {{ .Student.BirthDate.Format "02.01.2006" }}</p>
         <p>Средний балл: 4.8</p>
