@@ -34,7 +34,7 @@ func generateSessionID() string {
 func InitTemplates() {
 	templates = template.Must(template.ParseFiles(
 		"templates/index.html",
-		"templates/login.html",
+		"templates/login/login.html",
 		"templates/student/student.html",
 		"templates/student/personal_account.html",
 		"templates/student/schedule.html",
