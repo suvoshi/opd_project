@@ -3,10 +3,52 @@
 <h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Доска объявлений</h2>
 
 <div>
-    <h1>Электронный журнал</h1>
-    <p>Добро пожаловать в систему электронного журнала. Нажмите на кнопки слева для просмотра информации.</p>
-    
-    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <style>
+        .container-for-dashboard {
+            display: grid;
+            grid-template-columns: 35% 65%;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .blocks {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 0;
+            min-height: 200px;
+        }
+
+        .day-header {
+            border-radius: 8px;
+            padding: 1px;
+            text-align: center;
+            background: #014770d0;
+            border-bottom: 2px solid #e9ecef;
+        }
+    </style>
+
+    <div class="container-for-dashboard">
+        <div class="blocks">
+            <div class="day-header">
+                <h3 style="color: white;">Важные даты</h3>
+                <p></p>
+            </div>
+        </div>
+
+        <div class="blocks">
+            <div class="day-header">
+                <h3 style="text-align: center; color: white;">Объявления администрации</h3>
+                <p></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="blocks" style="margin-top: 10px; margin-right: -10px;">
+        <div class="day-header">
+            <h3 style="color: white;">Новости учебного процесса</h3>
+        </div>
     </div>
 </div>
 {{end}}

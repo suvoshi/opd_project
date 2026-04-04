@@ -19,26 +19,20 @@
 
             <h1 class="auth-title">Вход</h1>
 
-            <!-- Форма отправляет данные на /try_login через HTMX -->
-            <!-- без перезагрузки страницы                        -->
             <form hx-post="/try_login" hx-target="#error-message" hx-trigger="submit">
 
                 <div class="auth-fields">
-                    <!-- name="login" — под этим именем логин придёт на сервер -->
                     <input class="auth-input" type="email" name="login" placeholder="Email" required>
 
-                    <!-- name="password" — под этим именем пароль придёт на сервер -->
                     <input class="auth-input" type="password" name="password" placeholder="Пароль" required>
                 </div>
 
                 <div class="auth-buttons">
-                    <!-- type="submit" — запускает отправку формы -->
                     <button class="btn btn-primary" type="submit">Войти</button>
                 </div>
 
             </form>
 
-            <!-- Сюда HTMX вставит сообщение об ошибке от сервера -->
             <div id="error-message" class="error"></div>
 
         </div>
