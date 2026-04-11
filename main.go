@@ -65,7 +65,7 @@ func main() {
 
 	// 5. Запуск сервера
 	slog.Info("Сервер запущен на http://localhost:8080")
-	err = http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe("localhost:8080", nil)
 	if err != nil {
 		slog.Error("Ошибка сервера")
 	}

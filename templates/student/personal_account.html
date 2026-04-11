@@ -34,7 +34,7 @@
             {{range .Students}}
             <tr>
                 <td>{{ .LastName }} {{.FirstName}} {{.Patronymic}}</td>
-                <td></td>
+                <td>{{ .BirthDate.Format "02.01.2006" }}</td>
             </tr>
             {{else}}
             <tr>

@@ -214,6 +214,7 @@ func StudentDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	var announcementData []models.Announcement
 	result = config.DB.
 		Where("(date BETWEEN ? AND ?) AND visibility <= 1", weekAgo, now).
+		Order("date DESC").
 		Find(&announcementData)
 
 	var data = struct {
