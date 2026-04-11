@@ -105,10 +105,11 @@ type Action struct {
 	ID         int `gorm:"primaryKey"`
 	LessonID   int `gorm:"column:id_lesson;not null"`
 	StudentID  int `gorm:"column:id_student;not null"`
-	Grade      int `gorm:"check:grade BETWEEN 2 AND 5"`
+	Grade      int `gorm:"check:grade BETWEEN 1 AND 5"`
 	Attendance AttendanceType
 	// тот, кто поставил grade или attendance (не только учитель)
-	UserID int `gorm:"column:id_user"`
+	UserID    int `gorm:"column:id_user"`
+	CreatedAt time.Time
 
 	Lesson  Lesson  `gorm:"foreignKey:LessonID"`
 	Student Student `gorm:"foreignKey:StudentID"`
@@ -159,4 +160,12 @@ type Tutor struct {
 	BirthDate  time.Time `gorm:"type:date;not null"`
 
 	User User `gorm:"foreignKey:UserID"`
+}
+
+type Announcement struct {
+	ID          int       `gorm:"primaryKey"`
+	Date        time.Time `gorm:"type:date;not null"`
+	Theme       string    `gorm:"not null"`
+	Description string
+	Visibility  int
 }

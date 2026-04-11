@@ -102,7 +102,8 @@ func TutorHandler(w http.ResponseWriter, r *http.Request) {
 // Вход в приложение
 func TryLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "true" {
-		// потом сделать обработку такого запроса
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
 	}
 	login := r.FormValue("login")
 	pswd := r.FormValue("password")
@@ -163,15 +164,80 @@ func TryLogin(w http.ResponseWriter, r *http.Request) {
 // Дашборд
 func StudentDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "true" {
-		// потом сделать обработку такого запроса
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
 	}
-	templates.ExecuteTemplate(w, "dashboard", nil)
+	cookie, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// находим студента
+	var session models.Session
+	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+	slog.Info("StudentDashboardHandler - Пытаемся найти студента", "id_user", session.UserID)
+	var student models.Student
+	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+
+	now := time.Now()
+	weekAgo := now.Add(-7 * 24 * time.Hour)
+
+	var gradeData []struct {
+		DisciplineName string
+		Grade          int
+		Date           time.Time
+	}
+
+	result = config.DB.
+		Table("actions").
+		Select("disciplines.name as discipline_name, actions.grade, actions.created_at as date").
+		Joins("JOIN lessons ON lessons.id = actions.id_lesson").
+		Joins("JOIN disciplines ON disciplines.id = lessons.id_discipline").
+		Where("actions.id_student = ?", student.ID).
+		Where("actions.created_at BETWEEN ? AND ?", weekAgo, now).
+		Order("actions.created_at DESC").
+		Scan(&gradeData)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+
+	var announcementData []models.Announcement
+	result = config.DB.
+		Where("(date BETWEEN ? AND ?) AND visibility <= 1", weekAgo, now).
+		Find(&announcementData)
+
+	var data = struct {
+		D1 []struct {
+			DisciplineName string
+			Grade          int
+			Date           time.Time
+		}
+		D2 []models.Announcement
+	}{
+		D1: gradeData,
+		D2: announcementData,
+	}
+	fmt.Println(data)
+
+	templates.ExecuteTemplate(w, "dashboard", data)
+	slog.Info("StudentDashboardHandler - Успешно", "id_user", session.UserID)
 }
 
 // Личный кабинет
 func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "true" {
-		// потом сделать обработку такого запроса
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
 	}
 	cookie, err := r.Cookie("id_session")
 	if err != nil {
@@ -183,6 +249,7 @@ func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
 	}
 	slog.Info("StudentPersonalAccountHandler - Пытаемся найти студента", "id_user", session.UserID)
 	var student models.Student
@@ -192,6 +259,7 @@ func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 		First(&student)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
 	}
 
 	// Группа (все, кроме студента, сделавшего запрос)
@@ -199,6 +267,7 @@ func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 	result = config.DB.Where("id_group = ? AND id != ?", student.GroupID, student.ID).Find(&students)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
 	}
 
 	// Отдаем ответ
@@ -217,7 +286,8 @@ func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 // Расписание
 func StudentScheduleHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "true" {
-		// потом сделать обработку такого запроса
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
 	}
 	_, err := r.Cookie("id_session")
 	if err != nil {
@@ -231,7 +301,8 @@ func StudentScheduleHandler(w http.ResponseWriter, r *http.Request) {
 // Расписание - по дням недели
 func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "true" {
-		// потом сделать обработку такого запроса
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
 	}
 	cookie, err := r.Cookie("id_session")
 	if err != nil {
@@ -244,12 +315,14 @@ func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
 	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
 	}
 	slog.Info("StudentSchedulePartHandler - Пытаемся найти студента", "id_user", session.UserID)
 	var student models.Student
 	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
 	}
 
 	r.ParseForm()
@@ -289,7 +362,8 @@ func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
 // Успеваемость
 func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "true" {
-		// потом сделать обработку такого запроса
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
 	}
 	cookie, err := r.Cookie("id_session")
 	if err != nil {
@@ -302,12 +376,14 @@ func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
 	}
 	slog.Info("StudentDisciplineProgressHandler - Пытаемся найти студента", "id_user", session.UserID)
 	var student models.Student
 	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
 	}
 
 	now := time.Now()
@@ -319,6 +395,7 @@ func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 		Find(&groupDisciplines)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
 	}
 	sort.Slice(groupDisciplines, func(i, j int) bool {
 		return groupDisciplines[i].Discipline.Name < groupDisciplines[j].Discipline.Name
@@ -339,6 +416,7 @@ func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 			Find(&actions)
 		if result.Error != nil {
 			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
 		}
 		count := 0.0
 		sum := 0.0

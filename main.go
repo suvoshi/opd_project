@@ -34,6 +34,9 @@ func main() {
 		&models.Action{},
 		&models.StudentEndDiscipline{},
 		&models.Session{},
+		&models.Teacher{},
+		&models.Tutor{},
+		&models.Announcement{},
 	)
 
 	// 2. Загрузка шаблонов
