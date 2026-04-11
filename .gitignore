@@ -2,6 +2,7 @@
 *.sqlite
 *.sqlite3
 journal.db
+logging.log
 
 *.exe
 *.exe~

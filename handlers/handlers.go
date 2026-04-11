@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"opd_project/config"
 	"opd_project/models"
@@ -41,6 +42,8 @@ func InitTemplates() {
 		"templates/student/schedule_part.html",
 		"templates/student/discipline_progress.html",
 		"templates/student/dashboard.html",
+		"templates/teacher/teacher.html",
+		"templates/tutor/tutor.html",
 		"templates/error.html",
 	))
 }
@@ -75,10 +78,32 @@ func StudentHandler(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "student", nil)
 }
 
+// Страница преподователя
+func TeacherHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	templates.ExecuteTemplate(w, "teacher", nil)
+}
+
+// Страница куратора
+func TutorHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	templates.ExecuteTemplate(w, "tutor", nil)
+}
+
 // Для HTMX
 // Вход в приложение
 func TryLogin(w http.ResponseWriter, r *http.Request) {
-	// разобраться с возвратом кодов ошибок
+	if r.Header.Get("HX-Request") != "true" {
+		// потом сделать обработку такого запроса
+	}
 	login := r.FormValue("login")
 	pswd := r.FormValue("password")
 
@@ -117,32 +142,37 @@ func TryLogin(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   false,                   // Поменять на true
 		SameSite: http.SameSiteStrictMode, // Защита от CSRF
+		MaxAge:   86400,
 	}
 	http.SetCookie(w, cookie)
-	// добавить редирект на остальные роли
+
 	switch user.Role {
 	case models.RoleStudent:
 		w.Header().Set("HX-Redirect", "/student")
-	default:
-		w.Header().Set("HX-Redirect", "/")
+	case models.RoleTeacher:
+		w.Header().Set("HX-Redirect", "/teacher")
+	case models.RoleTutor:
+		w.Header().Set("HX-Redirect", "/tutor")
+	case models.RoleAdmin:
+		w.Header().Set("HX-Redirect", "/admin")
 	}
+	slog.Info("TryLogin - Успешный вход",
+		"id_user", user.ID, "role", user.Role)
 }
 
 // Дашборд
 func StudentDashboardHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("HX-Request") == "true" {
-		err := templates.ExecuteTemplate(w, "dashboard", nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	} else {
-		// что здесь происходит?
-		http.Redirect(w, r, "/student/", http.StatusSeeOther)
+	if r.Header.Get("HX-Request") != "true" {
+		// потом сделать обработку такого запроса
 	}
+	templates.ExecuteTemplate(w, "dashboard", nil)
 }
 
 // Личный кабинет
 func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") != "true" {
+		// потом сделать обработку такого запроса
+	}
 	cookie, err := r.Cookie("id_session")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -154,6 +184,7 @@ func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 	}
+	slog.Info("StudentPersonalAccountHandler - Пытаемся найти студента", "id_user", session.UserID)
 	var student models.Student
 	result = config.DB.
 		Preload("Group").
@@ -180,6 +211,7 @@ func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	templates.ExecuteTemplate(w, "personal_account", data)
+	slog.Info("StudentPersonalAccountHandler - Успешно", "id_user", session.UserID)
 }
 
 // Расписание
@@ -213,6 +245,7 @@ func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 	}
+	slog.Info("StudentSchedulePartHandler - Пытаемся найти студента", "id_user", session.UserID)
 	var student models.Student
 	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
 	if result.Error != nil {
@@ -250,6 +283,7 @@ func StudentSchedulePartHandler(w http.ResponseWriter, r *http.Request) {
 		WeekLessons: weekLessons,
 	}
 	templates.ExecuteTemplate(w, "schedule_part", data)
+	slog.Info("StudentSchedulePartHandler - Успешно", "id_user", session.UserID)
 }
 
 // Успеваемость
@@ -269,6 +303,7 @@ func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 	}
+	slog.Info("StudentDisciplineProgressHandler - Пытаемся найти студента", "id_user", session.UserID)
 	var student models.Student
 	result = config.DB.Where("id_user = ?", session.UserID).First(&student)
 	if result.Error != nil {
@@ -331,4 +366,5 @@ func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	templates.ExecuteTemplate(w, "discipline_progress", data)
+	slog.Info("StudentDisciplineProgressHandler - Успешно", "id_user", session.UserID)
 }
