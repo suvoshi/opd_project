@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Журнал оценок</title>
+    <link rel="shortcut icon" href="/static/img/logo_1.jpg" type="image/x-icon">
+    <link rel="stylesheet" href="\static\css\table.css">
+</head>
+
+<body>
+
+    <!-- ── Top Navigation Bar ── -->
+    <div class="top-nav">
+        <button class="back-btn" onclick="history.back()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            Назад
+        </button>
+        <h1>Личный кабинет студента</h1>
+    </div>
+
+    <div class="container">
+        <!-- ── Top bar ── -->
+        <div class="top-bar">
+            <button class="btn btn-save" onclick="saveJournal()">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                    <polyline points="17,21 17,13 7,13 7,21" />
+                    <polyline points="7,3 7,8 15,8" />
+                </svg>
+                Сохранить
+            </button>
+            <button class="btn btn-group" onclick="openGroupModal()">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                    <path d="M16 3.13a4 4 0 010 7.75" />
+                </svg>
+                Выбор группы
+            </button>
+
+            <div class="month-selector">
+                <label for="monthPicker"> Месяц:</label>
+                <input type="month" id="monthPicker" onchange="renderTable()">
+            </div>
+        </div>
+
+        <!-- ── Card ── -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Журнал оценок</h2>
+                <span class="group-name" id="groupLabel">Группа: 5130902/40001</span>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="journalTable">
+                    <thead><!-- Rendered by JS --></thead>
+                    <tbody><!-- Rendered by JS --></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Picker Popup ── -->
+    <div class="picker-overlay" id="pickerOverlay" onclick="closePicker()"></div>
+    <div class="picker-popup" id="pickerPopup">
+        <div class="section-label">Оценки</div>
+        <div class="picker-options" id="gradeOptions">
+            <div class="picker-option grade-opt-5" data-val="5" onclick="pickValue('5','grade')">5</div>
+            <div class="picker-option grade-opt-4" data-val="4" onclick="pickValue('4','grade')">4</div>
+            <div class="picker-option grade-opt-3" data-val="3" onclick="pickValue('3','grade')">3</div>
+            <div class="picker-option grade-opt-2" data-val="2" onclick="pickValue('2','grade')">2</div>
+            <div class="picker-option grade-opt-1" data-val="1" onclick="pickValue('1','grade')">1</div>
+        </div>
+        <div class="divider"></div>
+        <div class="section-label">Посещаемость</div>
+        <div class="picker-options" id="attOptions">
+            <div class="picker-option att-opt-я" data-val="Я" onclick="pickValue('Я','att')">Я</div>
+            <div class="picker-option att-opt-н" data-val="Н" onclick="pickValue('Н','att')">Н</div>
+            <div class="picker-option att-opt-б" data-val="Б" onclick="pickValue('Б','att')">Б</div>
+            <div class="picker-option att-opt-до" data-val="ДО" onclick="pickValue('ДО','att')">ДО</div>
+        </div>
+        <div class="divider"></div>
+        <div class="picker-options">
+            <div class="picker-option clear-opt" data-val="" onclick="pickValue('','clear')">✕</div>
+        </div>
+    </div>
+
+    <!-- ── Group Modal ── -->
+    <div class="modal-overlay" id="groupModal">
+        <div class="modal">
+            <h3>👥 Выбор группы</h3>
+            <select id="groupSelect">
+                <option disabled value="">Выберите группу</option>
+                <option value="5130902/40001">5130902/40001</option>
+                <option value="5130902/40002">5130902/40002</option>
+                <option value="5130902/40003">5130902/40003</option>
+            </select>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeGroupModal()">Отмена</button>
+                <button class="btn btn-confirm" onclick="confirmGroup()">Применить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Toast ── -->
+    <div class="toast" id="toast">✓ Журнал сохранён</div>
+
+    <script>
+        // ─── Data ─────────────────────────────────────────────
+        const students = [
+            { id: "1", name: "Григорьева А.П." },
+            { id: "2", name: "Крестовский А.В." },
+            { id: "3", name: "Любущак Е.В." },
+            { id: "4", name: "Марченко Н.С." },
+            { id: "5", name: "Панкратов С.А." },
+            { id: "6", name: "Савельев А.С." },
+            { id: "7", name: "Сахарова Е.Г." },
+            { id: "8", name: "Соколов Д.А." },
+            { id: "9", name: "Туги О.Р." },
+            { id: "10", name: "Хамщевиц Е.С." },
+            { id: "11", name: "Цветков Е.В." },
+        ];
+
+        let journalData = {};
+        let selectedGroup = "5130902/40001";
+        let currentTargetCell = null;
+
+        (function init() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('monthPicker').value = `${yyyy}-${mm}`;
+            renderTable();
+        })();
+
+        function renderTable() {
+            const monthInput = document.getElementById('monthPicker').value;
+            if (!monthInput) return;
+            const [year, month] = monthInput.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+
+            const thead = document.querySelector('#journalTable thead');
+            const tbody = document.querySelector('#journalTable tbody');
+
+            let h1 = '<tr>';
+            h1 += '<th class="num-header" rowspan="2">№</th>';
+            h1 += '<th class="student-header" rowspan="2">Ф.И.О. обучающихся</th>';
+            for (let d = 1; d <= daysInMonth; d++) h1 += `<th class="day-header">${d}</th>`;
+            h1 += '<th class="final-header" rowspan="2">Зачетные оценки</th>';
+            h1 += '</tr>';
+
+            let h2 = '<tr class="month-row">';
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dt = new Date(year, month - 1, d);
+                const wd = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'][dt.getDay()];
+                const isWeekend = (dt.getDay() === 0 || dt.getDay() === 6);
+                const style = isWeekend ? 'style="color:#c62828;"' : '';
+                h2 += `<th class="day-header" ${style}><div style="font-size:10px">${wd}</div></th>`;
+            }
+            h2 += '</tr>';
+            thead.innerHTML = h1 + h2;
+
+            let bodyHTML = '';
+            students.forEach((s, si) => {
+                bodyHTML += '<tr>';
+                bodyHTML += `<td class="num-cell">${s.id}</td>`;
+                bodyHTML += `<td class="student-cell">${s.name}</td>`;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const key = `${s.id}-${d}`;
+                    const cellData = journalData[key];
+                    const val = cellData ? cellData.value : '';
+                    const cls = getCellClass(val);
+                    bodyHTML += `<td class="grade-cell ${cls}" data-student="${si}" data-day="${d}" onclick="openPicker(event, ${si}, ${d})">${val}</td>`;
+                }
+                const final = calcFinal(s.id, daysInMonth);
+                const fcls = getCellClass(final);
+                bodyHTML += `<td class="final-cell ${fcls}" id="final-${s.id}">${final}</td></tr>`;
+            });
+            tbody.innerHTML = bodyHTML;
+        }
+
+        function getCellClass(val) {
+            if (!val) return '';
+            if (['5', '4', '3', '2', '1'].includes(val)) return `grade-${val}`;
+            const map = { 'Я': 'attendance-я', 'Н': 'attendance-н', 'Б': 'attendance-б', 'ДО': 'attendance-до' };
+            return map[val] || '';
+        }
+
+        function calcFinal(studentId, daysInMonth) {
+            let sum = 0, count = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const key = `${studentId}-${d}`;
+                const cell = journalData[key];
+                if (cell && ['5', '4', '3', '2', '1'].includes(cell.value)) {
+                    sum += parseInt(cell.value);
+                    count++;
+                }
+            }
+            if (count === 0) return '';
+            return (sum / count).toFixed(2);
+        }
+
+        function recalcAllFinals() {
+            const monthInput = document.getElementById('monthPicker').value;
+            if (!monthInput) return;
+            const [year, month] = monthInput.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            students.forEach(s => {
+                const final = calcFinal(s.id, daysInMonth);
+                const el = document.getElementById(`final-${s.id}`);
+                if (el) { el.textContent = final; el.className = 'final-cell ' + getCellClass(final); }
+            });
+        }
+
+        function openPicker(e, si, day) {
+            e.stopPropagation();
+            currentTargetCell = [si, day];
+            const popup = document.getElementById('pickerPopup');
+            const overlay = document.getElementById('pickerOverlay');
+            const rect = e.target.getBoundingClientRect();
+            popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
+            popup.style.top = (rect.bottom + 4) + 'px';
+            popup.classList.add('active');
+            overlay.classList.add('active');
+        }
+
+        function closePicker() {
+            document.getElementById('pickerPopup').classList.remove('active');
+            document.getElementById('pickerOverlay').classList.remove('active');
+            currentTargetCell = null;
+        }
+
+        function pickValue(val, type) {
+            if (!currentTargetCell) return;
+            const [si, day] = currentTargetCell;
+            const key = `${students[si].id}-${day}`;
+            if (type === 'clear') delete journalData[key];
+            else journalData[key] = { value: val, type };
+            document.querySelectorAll(`td[data-student="${si}"][data-day="${day}"]`).forEach(cell => {
+                cell.textContent = val;
+                cell.className = 'grade-cell ' + getCellClass(val);
+            });
+            recalcAllFinals();
+            closePicker();
+        }
+
+        function openGroupModal() {
+            document.getElementById('groupModal').classList.add('active');
+            document.getElementById('groupSelect').value = selectedGroup;
+        }
+        function closeGroupModal() { document.getElementById('groupModal').classList.remove('active'); }
+        function confirmGroup() {
+            const val = document.getElementById('groupSelect').value;
+            if (!val) return;
+            selectedGroup = val;
+            document.getElementById('groupLabel').textContent = `Группа: ${val}`;
+            closeGroupModal();
+        }
+
+        function saveJournal() {
+            const data = { group: selectedGroup, month: document.getElementById('monthPicker').value, entries: journalData };
+            localStorage.setItem('schoolJournal', JSON.stringify(data));
+            showToast('✓ Журнал сохранён');
+        }
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        (function loadSaved() {
+            const raw = localStorage.getItem('schoolJournal');
+            if (!raw) return;
+            try {
+                const data = JSON.parse(raw);
+                if (data.group) { selectedGroup = data.group; document.getElementById('groupLabel').textContent = `Группа: ${data.group}`; }
+                if (data.month) document.getElementById('monthPicker').value = data.month;
+                if (data.entries) journalData = data.entries;
+            } catch (e) { }
+        })();
+    </script>
+</body>
+
+</html>
