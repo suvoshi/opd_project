@@ -11,6 +11,7 @@ import (
 	"opd_project/config"
 	"opd_project/models"
 	"sort"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -43,6 +44,12 @@ func InitTemplates() {
 		"templates/student/discipline_progress.html",
 		"templates/student/dashboard.html",
 		"templates/teacher/teacher.html",
+		"templates/teacher/dashboard.html",
+		"templates/teacher/personal_account.html",
+		"templates/teacher/schedule.html",
+		"templates/teacher/disciplines.html",
+		"templates/teacher/disciplines_part_group.html",
+		"templates/teacher/disciplines_part_table.html",
 		"templates/tutor/tutor.html",
 		"templates/error.html",
 	))
@@ -161,6 +168,7 @@ func TryLogin(w http.ResponseWriter, r *http.Request) {
 		"id_user", user.ID, "role", user.Role)
 }
 
+// Студент
 // Дашборд
 func StudentDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "true" {
@@ -446,4 +454,155 @@ func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	templates.ExecuteTemplate(w, "discipline_progress", data)
 	slog.Info("StudentDisciplineProgressHandler - Успешно", "id_user", session.UserID)
+}
+
+// Учитель
+// Дашборд учителя
+func TeacherDashboardHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") != "true" {
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
+	}
+	_, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	templates.ExecuteTemplate(w, "teacher_dashboard", nil)
+}
+
+// Личный кабинет учителя
+func TeacherPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") != "true" {
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
+	}
+	_, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	templates.ExecuteTemplate(w, "teacher_personal_account", nil)
+}
+
+// Расписание учителя
+func TeacherScheduleHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") != "true" {
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
+	}
+	_, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	templates.ExecuteTemplate(w, "teacher_schedule", nil)
+}
+
+// Дисциплины учителя
+func TeacherDisciplinesHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") != "true" {
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
+	}
+	cookie, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// находим учителя
+	var session models.Session
+	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+	slog.Info("TeacherDisciplinesHandler - Пытаемся найти учителя", "id_user", session.UserID)
+	var teacher models.Teacher
+	result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+
+	var groupDisciplines []models.GroupDiscipline
+	result = config.DB.
+		Table("group_disciplines").
+		Where("id_teacher = ?", teacher.ID).
+		Group("id_discipline").
+		Select(`
+        MIN(id) as id,
+        MIN(id_group) as id_group,
+        id_teacher,
+        id_discipline
+    `).
+		Preload("Discipline").
+		Find(&groupDisciplines)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+
+	templates.ExecuteTemplate(w, "teacher_disciplines", groupDisciplines)
+	slog.Info("TeacherDisciplinesHandler - Успешно", "id_user", session.UserID)
+}
+
+// Дисциплины учителя - "teacher_disciplines_part_group"
+func TeacherDisciplinesPartGroupHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") != "true" {
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
+	}
+	cookie, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// находим учителя
+	var session models.Session
+	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+	slog.Info("TeacherDisciplinesPartGroupHandler - Пытаемся найти учителя", "id_user", session.UserID)
+	var teacher models.Teacher
+	result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+
+	id_disc, _ := strconv.Atoi(r.FormValue("id_discipline"))
+
+	var groupDisciplines []models.GroupDiscipline
+	result = config.DB.
+		Preload("Group").
+		Preload("Discipline").
+		Where("id_teacher = ? AND id_discipline = ?", teacher.ID, id_disc).
+		Find(&groupDisciplines)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+
+	templates.ExecuteTemplate(w, "teacher_disciplines_part_group", groupDisciplines)
+	slog.Info("TeacherDisciplinesPartGroupHandler - Успешно", "id_user", session.UserID)
+
+}
+
+// Дисциплины учителя - "teacher_disciplines_part_table"
+func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") != "true" {
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
+	}
+	_, err := r.Cookie("id_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	templates.ExecuteTemplate(w, "teacher_disciplines_part_table", nil)
 }

@@ -1,0 +1,71 @@
+{{define "teacher_disciplines_part_group"}}
+<!-- groups-partial.html -->
+<div class="groups-list">
+    <h4>👥 Группы по дисциплине "{{(index . 0).Discipline.Name}}"</h4>
+    
+    {{if .}}
+        {{range .}}
+        <div class="group-item" data-group-id="{{.ID}}">
+            <strong>{{.Group.GroupSign}}</strong>
+            <span class="group-info">
+                
+            </span>
+            
+            <!-- Можно добавить кнопку для дальнейших действий -->
+            <button class="group-detail-btn"
+                    hx-post="/teacher/disciplines_part_table/"
+                    hx-target="#group-detail-{{.ID}}"
+                    hx-trigger="click"
+                    hx-vals='js:{"group_id": "{{.ID}}", "discipline_id": "{{.DisciplineID}}"}'>
+                Подробнее
+            </button>
+            
+            <div id="group-detail-{{.ID}}" class="group-detail"></div>
+        </div>
+        {{end}}
+    {{else}}
+        <p class="no-groups">Нет групп для этой дисциплины</p>
+    {{end}}
+</div>
+
+<style>
+    .groups-list h4 {
+        margin: 0 0 10px 0;
+        color: #2c3e50;
+    }
+    .group-item {
+        padding: 10px;
+        margin: 8px 0;
+        background: white;
+        border-radius: 4px;
+        border-left: 3px solid #2ecc71;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .group-info {
+        color: #666;
+        font-size: 14px;
+    }
+    .group-detail-btn {
+        background: #2ecc71;
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .no-groups {
+        color: #999;
+        font-style: italic;
+        padding: 10px;
+    }
+    .group-detail {
+        width: 100%;
+        margin-top: 10px;
+    }
+</style>
+{{end}}

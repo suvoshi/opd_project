@@ -1,0 +1,77 @@
+{{ define "teacher_disciplines"}}
+<!-- disciplines-partial.html -->
+<div class="disciplines-list">
+    <h2>📚 Мои дисциплины</h2>
+    
+    {{range .}}
+    <div class="discipline-card" 
+         data-discipline-id="{{.ID}}"
+         data-discipline-name="{{.Discipline.Name}}">
+        <div class="discipline-info">
+            <h3>{{.Discipline.Name}}</h3>
+            <p>Часов: {{.Discipline.Hours}}</p>
+        </div>
+        
+        <!-- Кнопка для загрузки групп с передачей ID дисциплины -->
+        <button class="show-groups-btn"
+                hx-post="/teacher/disciplines_part_group/"
+                hx-target="#groups-container-{{.ID}}"
+                hx-trigger="click"
+                hx-indicator="#spinner-{{.ID}}"
+                hx-vals='js:{"id_discipline": "{{.ID}}"}'
+                hx-swap="innerHTML">
+            📋 Показать группы
+        </button>
+        
+        <!-- Индикатор загрузки -->
+        <div id="spinner-{{.ID}}" class="spinner" style="display: none;">
+            ⏳ Загрузка групп...
+        </div>
+        
+        <!-- Контейнер для групп -->
+        <div id="groups-container-{{.ID}}" class="groups-container"></div>
+    </div>
+    {{end}}
+</div>
+
+<style>
+    .disciplines-list {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .discipline-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .discipline-info h3 {
+        margin: 0 0 10px 0;
+        color: #2c3e50;
+    }
+    .show-groups-btn {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    .groups-container {
+        margin-top: 15px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+    .group-item {
+        padding: 8px;
+        margin: 5px 0;
+        background: white;
+        border-radius: 4px;
+        border-left: 3px solid #3498db;
+    }
+</style>
+{{end}}

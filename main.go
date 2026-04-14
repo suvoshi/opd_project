@@ -59,6 +59,14 @@ func main() {
 	http.HandleFunc("/student/schedule/part/", handlers.StudentSchedulePartHandler)
 	http.HandleFunc("/student/discipline_progress/", handlers.StudentDisciplineProgressHandler)
 
+	// 3.1.2 Для учителя
+	http.HandleFunc("/teacher/dashboard/", handlers.TeacherDashboardHandler)
+	http.HandleFunc("/teacher/personal_account/", handlers.TeacherPersonalAccountHandler)
+	http.HandleFunc("/teacher/schedule/", handlers.TeacherScheduleHandler)
+	http.HandleFunc("/teacher/disciplines/", handlers.TeacherDisciplinesHandler)
+	http.HandleFunc("/teacher/disciplines_part_group/", handlers.TeacherDisciplinesPartGroupHandler)
+	http.HandleFunc("/teacher/disciplines_part_table/", handlers.TeacherDisciplinesPartTableHandler)
+
 	// 4. Раздача статики (CSS, JS, картинки)
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
