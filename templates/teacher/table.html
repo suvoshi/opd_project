@@ -13,12 +13,6 @@
 
     <!-- ── Top Navigation Bar ── -->
     <div class="top-nav">
-        <button class="back-btn" onclick="history.back()">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            Назад
-        </button>
         <h1>Личный кабинет студента</h1>
     </div>
 
@@ -40,12 +34,13 @@
                     <path d="M23 21v-2a4 4 0 00-3-3.87" />
                     <path d="M16 3.13a4 4 0 010 7.75" />
                 </svg>
-                Выбор группы
+                Выбор группы и предмета
             </button>
 
-            <div class="month-selector">
-                <label for="monthPicker"> Месяц:</label>
-                <input type="month" id="monthPicker" onchange="renderTable()">
+            <div class="lessons-slider">
+                <label for="lessonRange"> Занятия:</label>
+                <input type="range" id="lessonRange" min="1" max="36" value="10" onchange="updateLessonCount()">
+                <span id="lessonCount">10 занятий</span>
             </div>
         </div>
 
@@ -53,7 +48,7 @@
         <div class="card">
             <div class="card-header">
                 <h2>Журнал оценок</h2>
-                <span class="group-name" id="groupLabel">Группа: 5130902/40001</span>
+                <span class="group-name" id="groupLabel">Группа: 5130902/40001 | Математика</span>
             </div>
 
             <div class="table-wrapper">
@@ -93,13 +88,25 @@
     <!-- ── Group Modal ── -->
     <div class="modal-overlay" id="groupModal">
         <div class="modal">
-            <h3>👥 Выбор группы</h3>
-            <select id="groupSelect">
+            <h3> Выбор группы и предмета</h3>
+
+            <label style="display:block; margin-bottom:8px; font-weight:600; color:#555;">Группа:</label>
+            <select id="groupSelect" style="margin-bottom:16px;">
                 <option disabled value="">Выберите группу</option>
                 <option value="5130902/40001">5130902/40001</option>
                 <option value="5130902/40002">5130902/40002</option>
                 <option value="5130902/40003">5130902/40003</option>
             </select>
+
+            <label style="display:block; margin-bottom:8px; font-weight:600; color:#555;">Предмет:</label>
+            <select id="subjectSelectModal">
+                <option value="math">Математика</option>
+                <option value="russian">Русский язык</option>
+                <option value="art">ИЗО</option>
+                <option value="history">История</option>
+                <option value="physics">Физика</option>
+            </select>
+
             <div class="modal-actions">
                 <button class="btn btn-cancel" onclick="closeGroupModal()">Отмена</button>
                 <button class="btn btn-confirm" onclick="confirmGroup()">Применить</button>
@@ -107,7 +114,7 @@
         </div>
     </div>
 
-    <!-- ── Toast ── -->
+    <!-- ── Toast ─ -->
     <div class="toast" id="toast">✓ Журнал сохранён</div>
 
     <script>
@@ -126,41 +133,59 @@
             { id: "11", name: "Цветков Е.В." },
         ];
 
+        const subjects = {
+            math: "Математика",
+            russian: "Русский язык",
+            art: "ИЗО",
+            history: "История",
+            physics: "Физика"
+        };
+
         let journalData = {};
+        let lessonTopics = {};
         let selectedGroup = "5130902/40001";
+        let selectedSubject = "math";
+        let totalLessons = 10;
         let currentTargetCell = null;
 
         (function init() {
-            const now = new Date();
-            const yyyy = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            document.getElementById('monthPicker').value = `${yyyy}-${mm}`;
+            document.getElementById('lessonRange').value = totalLessons;
+            document.getElementById('lessonCount').textContent = `${totalLessons} занятий`;
             renderTable();
         })();
 
-        function renderTable() {
-            const monthInput = document.getElementById('monthPicker').value;
-            if (!monthInput) return;
-            const [year, month] = monthInput.split('-').map(Number);
-            const daysInMonth = new Date(year, month, 0).getDate();
 
+        function updateLessonCount() {
+            totalLessons = parseInt(document.getElementById('lessonRange').value);
+            document.getElementById('lessonCount').textContent = `${totalLessons} занятий`;
+            renderTable();
+            recalcAllFinals();
+        }
+
+        function renderTable() {
             const thead = document.querySelector('#journalTable thead');
             const tbody = document.querySelector('#journalTable tbody');
 
             let h1 = '<tr>';
             h1 += '<th class="num-header" rowspan="2">№</th>';
             h1 += '<th class="student-header" rowspan="2">Ф.И.О. обучающихся</th>';
-            for (let d = 1; d <= daysInMonth; d++) h1 += `<th class="day-header">${d}</th>`;
+            for (let l = 1; l <= totalLessons; l++) {
+                h1 += `<th class="lesson-header" colspan="1">
+                    <div style="font-size:11px; margin-bottom:4px;">Занятие ${l}</div>
+                    <input type="text" class="topic-input" 
+                           placeholder="Тема..." 
+                           value="${lessonTopics[`lesson-${l}`] || ''}" 
+                           onchange="saveTopic(${l}, this.value)"
+                           onclick="event.stopPropagation()"
+                           style="width:100%; border:none; background:#d6e4f5; padding:4px; font-size:10px; text-align:center; border-radius:4px;">
+                </th>`;
+            }
             h1 += '<th class="final-header" rowspan="2">Зачетные оценки</th>';
             h1 += '</tr>';
 
-            let h2 = '<tr class="month-row">';
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dt = new Date(year, month - 1, d);
-                const wd = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'][dt.getDay()];
-                const isWeekend = (dt.getDay() === 0 || dt.getDay() === 6);
-                const style = isWeekend ? 'style="color:#c62828;"' : '';
-                h2 += `<th class="day-header" ${style}><div style="font-size:10px">${wd}</div></th>`;
+            let h2 = '<tr>';
+            for (let l = 1; l <= totalLessons; l++) {
+                h2 += `<th class="day-header">Оценка</th>`;
             }
             h2 += '</tr>';
             thead.innerHTML = h1 + h2;
@@ -170,18 +195,25 @@
                 bodyHTML += '<tr>';
                 bodyHTML += `<td class="num-cell">${s.id}</td>`;
                 bodyHTML += `<td class="student-cell">${s.name}</td>`;
-                for (let d = 1; d <= daysInMonth; d++) {
-                    const key = `${s.id}-${d}`;
+                for (let l = 1; l <= totalLessons; l++) {
+                    const key = `${s.id}-lesson-${l}`;
                     const cellData = journalData[key];
                     const val = cellData ? cellData.value : '';
                     const cls = getCellClass(val);
-                    bodyHTML += `<td class="grade-cell ${cls}" data-student="${si}" data-day="${d}" onclick="openPicker(event, ${si}, ${d})">${val}</td>`;
+                    bodyHTML += `<td class="grade-cell ${cls}" 
+                        data-student="${si}" data-lesson="${l}"
+                        onclick="openPicker(event, ${si}, ${l})">${val}</td>`;
                 }
-                const final = calcFinal(s.id, daysInMonth);
+                const final = calcFinal(s.id, totalLessons);
                 const fcls = getCellClass(final);
-                bodyHTML += `<td class="final-cell ${fcls}" id="final-${s.id}">${final}</td></tr>`;
+                bodyHTML += `<td class="final-cell ${fcls}" id="final-${s.id}">${final}</td>`;
+                bodyHTML += '</tr>';
             });
             tbody.innerHTML = bodyHTML;
+        }
+
+        function saveTopic(lessonNum, topic) {
+            lessonTopics[`lesson-${lessonNum}`] = topic;
         }
 
         function getCellClass(val) {
@@ -191,10 +223,10 @@
             return map[val] || '';
         }
 
-        function calcFinal(studentId, daysInMonth) {
+        function calcFinal(studentId, lessonsCount) {
             let sum = 0, count = 0;
-            for (let d = 1; d <= daysInMonth; d++) {
-                const key = `${studentId}-${d}`;
+            for (let l = 1; l <= lessonsCount; l++) {
+                const key = `${studentId}-lesson-${l}`;
                 const cell = journalData[key];
                 if (cell && ['5', '4', '3', '2', '1'].includes(cell.value)) {
                     sum += parseInt(cell.value);
@@ -206,20 +238,16 @@
         }
 
         function recalcAllFinals() {
-            const monthInput = document.getElementById('monthPicker').value;
-            if (!monthInput) return;
-            const [year, month] = monthInput.split('-').map(Number);
-            const daysInMonth = new Date(year, month, 0).getDate();
             students.forEach(s => {
-                const final = calcFinal(s.id, daysInMonth);
+                const final = calcFinal(s.id, totalLessons);
                 const el = document.getElementById(`final-${s.id}`);
                 if (el) { el.textContent = final; el.className = 'final-cell ' + getCellClass(final); }
             });
         }
 
-        function openPicker(e, si, day) {
+        function openPicker(e, si, lesson) {
             e.stopPropagation();
-            currentTargetCell = [si, day];
+            currentTargetCell = [si, lesson];
             const popup = document.getElementById('pickerPopup');
             const overlay = document.getElementById('pickerOverlay');
             const rect = e.target.getBoundingClientRect();
@@ -237,11 +265,11 @@
 
         function pickValue(val, type) {
             if (!currentTargetCell) return;
-            const [si, day] = currentTargetCell;
-            const key = `${students[si].id}-${day}`;
+            const [si, lesson] = currentTargetCell;
+            const key = `${students[si].id}-lesson-${lesson}`;
             if (type === 'clear') delete journalData[key];
             else journalData[key] = { value: val, type };
-            document.querySelectorAll(`td[data-student="${si}"][data-day="${day}"]`).forEach(cell => {
+            document.querySelectorAll(`td[data-student="${si}"][data-lesson="${lesson}"]`).forEach(cell => {
                 cell.textContent = val;
                 cell.className = 'grade-cell ' + getCellClass(val);
             });
@@ -252,21 +280,53 @@
         function openGroupModal() {
             document.getElementById('groupModal').classList.add('active');
             document.getElementById('groupSelect').value = selectedGroup;
+            document.getElementById('subjectSelectModal').value = selectedSubject;
         }
         function closeGroupModal() { document.getElementById('groupModal').classList.remove('active'); }
         function confirmGroup() {
-            const val = document.getElementById('groupSelect').value;
-            if (!val) return;
-            selectedGroup = val;
-            document.getElementById('groupLabel').textContent = `Группа: ${val}`;
+            const grp = document.getElementById('groupSelect').value;
+            const subj = document.getElementById('subjectSelectModal').value;
+            if (!grp) return;
+            selectedGroup = grp;
+            selectedSubject = subj;
+            // Удалена строка с subjectSelect, так как этого элемента больше нет в HTML
+            document.getElementById('groupLabel').textContent = `Группа: ${grp} | ${subjects[subj]}`;
             closeGroupModal();
+            loadJournalData();
+            renderTable();
         }
 
         function saveJournal() {
-            const data = { group: selectedGroup, month: document.getElementById('monthPicker').value, entries: journalData };
-            localStorage.setItem('schoolJournal', JSON.stringify(data));
+            const key = `schoolJournal_${selectedGroup}_${selectedSubject}`;
+            const data = {
+                group: selectedGroup,
+                subject: selectedSubject,
+                lessons: totalLessons,
+                entries: journalData,
+                topics: lessonTopics
+            };
+            localStorage.setItem(key, JSON.stringify(data));
             showToast('✓ Журнал сохранён');
         }
+
+        function loadJournalData() {
+            const key = `schoolJournal_${selectedGroup}_${selectedSubject}`;
+            const raw = localStorage.getItem(key);
+            if (!raw) {
+                journalData = {};
+                lessonTopics = {};
+                return;
+            }
+            try {
+                const data = JSON.parse(raw);
+                journalData = data.entries || {};
+                lessonTopics = data.topics || {};
+            } catch (e) {
+                journalData = {};
+                lessonTopics = {};
+            }
+        }
+
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
@@ -275,13 +335,24 @@
         }
 
         (function loadSaved() {
-            const raw = localStorage.getItem('schoolJournal');
+            const key = `schoolJournal_${selectedGroup}_${selectedSubject}`;
+            const raw = localStorage.getItem(key);
             if (!raw) return;
             try {
                 const data = JSON.parse(raw);
-                if (data.group) { selectedGroup = data.group; document.getElementById('groupLabel').textContent = `Группа: ${data.group}`; }
-                if (data.month) document.getElementById('monthPicker').value = data.month;
+                if (data.group) selectedGroup = data.group;
+                if (data.subject) {
+                    selectedSubject = data.subject;
+                    document.getElementById('subjectSelect').value = data.subject;
+                }
+                if (data.lessons) {
+                    totalLessons = data.lessons;
+                    document.getElementById('lessonRange').value = totalLessons;
+                    document.getElementById('lessonCount').textContent = `${totalLessons} занятий`;
+                }
                 if (data.entries) journalData = data.entries;
+                if (data.topics) lessonTopics = data.topics;
+                document.getElementById('groupLabel').textContent = `Группа: ${selectedGroup} | ${subjects[selectedSubject]}`;
             } catch (e) { }
         })();
     </script>
