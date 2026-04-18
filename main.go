@@ -63,6 +63,7 @@ func main() {
 	http.HandleFunc("/teacher/dashboard/", handlers.TeacherDashboardHandler)
 	http.HandleFunc("/teacher/personal_account/", handlers.TeacherPersonalAccountHandler)
 	http.HandleFunc("/teacher/schedule/", handlers.TeacherScheduleHandler)
+	http.HandleFunc("/teacher/schedule/part/", handlers.TeacherSchedulePartHandler)
 	http.HandleFunc("/teacher/disciplines/", handlers.TeacherDisciplinesHandler)
 	http.HandleFunc("/teacher/disciplines_part_group/", handlers.TeacherDisciplinesPartGroupHandler)
 	http.HandleFunc("/teacher/disciplines_part_table/", handlers.TeacherDisciplinesPartTableHandler)

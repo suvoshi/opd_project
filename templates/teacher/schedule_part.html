@@ -1,0 +1,220 @@
+{{define "teacher_schedule_part"}}
+<div class="schedule-container">
+    <div class="two-columns">
+        <div class="column">
+            {{range $index, $lessons := .WeekLessons}}
+                {{if lt $index 3}}
+                <div class="day-card">
+                    <div class="day-header">
+                        <div class="day-name">
+                            {{if eq $index 0}}Понедельник
+                            {{else if eq $index 1}}Вторник
+                            {{else if eq $index 2}}Среда
+                            {{end}}
+                        </div>
+                    </div>
+                    
+                    <div class="day-lessons">
+                        {{if ne (len $lessons) 0}}
+                            {{range $lessons}}
+                            <div class="lesson-item">
+                                <div class="lesson-time">
+                                    {{.DateBegin.Format "15:04"}} - {{.DateEnd.Format "15:04"}}
+                                </div>
+                                <div class="lesson-subject">{{.Discipline.Name}}</div>
+                                <div class="lesson-details">
+                                    {{if .Description}}
+                                        <span>📝 {{.Description}}</span>
+                                    {{end}}
+                                    {{if .Discipline.Hours}}
+                                        <span>⏱️ {{.Discipline.Hours}} ч.</span>
+                                    {{end}}
+                                    <span>{{.Discipline.TypePerform}}</span>
+                                </div>
+                            </div>
+                            {{end}}
+                        {{else}}
+                            <div class="no-lessons">Занятий нет, можно отдыхать!</div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            {{end}}
+        </div>
+
+        <div class="column">
+            {{range $index, $lessons := .WeekLessons}}
+                {{if ge $index 3}}
+                <div class="day-card">
+                    <div class="day-header">
+                        <div class="day-name">
+                            {{if eq $index 3}}Четверг
+                            {{else if eq $index 4}}Пятница
+                            {{else if eq $index 5}}Суббота
+                            {{else if eq $index 6}}Воскресенье
+                            {{end}}
+                        </div>
+                    </div>
+                    
+                    <div class="day-lessons">
+                        {{if ne (len $lessons) 0}}
+                            {{range $lessons}}
+                            <div class="lesson-item">
+                                <div class="lesson-time">
+                                    {{.DateBegin.Format "15:04"}} - {{.DateEnd.Format "15:04"}}
+                                </div>
+                                <div class="lesson-subject">{{.Discipline.Name}}</div>
+                                <div class="lesson-details">
+                                    {{if .Description}}
+                                        <span>📝 {{.Description}}</span>
+                                    {{end}}
+                                    {{if .Discipline.Hours}}
+                                        <span>⏱️ {{.Discipline.Hours}} ч.</span>
+                                    {{end}}
+                                    <span>{{.Discipline.TypePerform}}</span>
+                                    {{if .Actions}}
+                                        {{$first := index .Actions 0}}
+                                        {{if $first.Grade}}
+                                            <span>Оценка: {{$first.Grade}}</span>
+                                        {{end}}
+                                        {{if $first.Attendance}}
+                                            <span>Посещаемость: {{$first.Attendance}}</span>
+                                        {{end}}
+                                    {{end}}
+                                </div>
+                            </div>
+                            {{end}}
+                        {{else}}
+                            <div class="no-lessons">Занятий нет, можно отдыхать!</div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            {{end}}
+        </div>
+    </div>
+</div>
+
+<style>
+    .schedule-container {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+        padding: 20px;
+    }
+
+    .two-columns {
+        display: flex;
+        gap: 40px;
+        align-items: stretch;
+    }
+
+    .column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 50px;
+    }
+
+    .day-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .day-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .day-header {
+        padding: 16px;
+        text-align: center;
+        background: #014770d0;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .day-name {
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+    }
+
+    .day-lessons {
+        padding: 12px;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .lesson-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+        transition: background 0.2s;
+    }
+
+    .lesson-item:hover {
+        background: #e9ecef;
+    }
+
+    .lesson-time {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    .lesson-subject {
+        font-size: 15px;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 6px;
+    }
+
+    .lesson-details {
+        display: flex;
+        gap: 12px;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 6px;
+        flex-wrap: wrap;
+    }
+
+    .lesson-details span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .no-lessons {
+        text-align: center;
+        padding: 30px;
+        color: #999;
+        font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+        .two-columns {
+            flex-direction: column;
+        }
+        
+        .schedule-container {
+            padding: 15px;
+        }
+        
+        .day-name {
+            font-size: 16px;
+        }
+
+        .lesson-subject {
+            font-size: 14px;
+        }
+    }
+</style>
+{{end}}

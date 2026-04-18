@@ -1,3 +1,222 @@
 {{define "teacher_schedule"}}
-<h2>Расписание учителя здесь</h2>
+<style>
+    .week-selector { font-family: Arial, sans-serif; }
+    .week-selector .selector { background: #f0f0f0; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .week-selector .date-input { margin: 15px 0; }
+    .week-selector .date-input label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .week-selector input[type="date"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+    .week-selector .week-info { background: #e7f3ff; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    .week-selector button { background: #014770d0; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+    .week-selector .result { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-top: 20px; min-height: 100px; }
+    .week-selector .loading { text-align: center; margin: 10px; display: none; }
+
+    .htmx-indicator { display: none; }
+    .htmx-request .htmx-indicator { display: block; }
+</style>
+
+<h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Расписание</h2>
+
+<div class="week-selector">
+    
+    <div class="selector">
+        <div class="date-input" style="padding-right: 20px;">
+            <label style="padding-bottom: 5px; margin-top: -15px;">Выберите любой день недели:</label>
+            <input type="date" class="datePicker">
+        </div>
+        
+        <div class="weekInfo" style="padding-bottom: 10px;">
+            Неделя будет вычислена автоматически
+        </div>
+        
+        <button class="schedule-btn"
+                hx-post="/teacher/schedule/part/"
+                hx-target="#result-s"
+                hx-trigger="click"
+                hx-indicator=".loading">
+            Показать расписание
+        </button>
+    </div>
+    
+    <div class="loading htmx-indicator">
+        ⏳ Загрузка...
+    </div>
+    
+    <div class="week-nav" style="display: flex; gap: 10px; margin-top: 15px;">
+        <button class="week-prev" 
+                hx-post="/teacher/schedule/part/"
+                hx-target="#result-s"
+                hx-indicator=".loading"
+                style="background: #014770d0; padding: 10px 20px;">
+            ◀ Предыдущая неделя
+        </button>
+
+        <button class="week-current" 
+                hx-post="/teacher/schedule/part/"
+                hx-target="#result-s"
+                hx-indicator=".loading"
+                style="background: #014770d0; padding: 10px 20px;">
+            Текущая неделя
+        </button>
+        
+        <button class="week-next" 
+                hx-post="/teacher/schedule/part/"
+                hx-target="#result-s"
+                hx-indicator=".loading"
+                style="background: #014770d0; padding: 10px 20px;">
+            Следующая неделя ▶
+        </button>
+    </div>
+    
+    <div class="result" id="result-s">
+        Выберите день в календаре и нажмите кнопку
+    </div>
+</div>
+
+<script>
+    function initWeekSelector(container) {
+        const datePicker = container.querySelector('.datePicker');
+        const weekInfo = container.querySelector('.weekInfo');
+        const button = container.querySelector('.schedule-btn');
+        const prevBtn = container.querySelector('.week-prev');
+        const nextBtn = container.querySelector('.week-next');
+        const currentBtn = container.querySelector('.week-current');
+        
+        function getWeekDatesFromDate(dateStr) {
+            const selectedDate = new Date(dateStr);
+            const dayOfWeek = selectedDate.getDay();
+            const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            
+            const monday = new Date(selectedDate);
+            monday.setDate(selectedDate.getDate() - daysToMonday);
+            monday.setHours(0, 0, 0, 0);
+            
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            
+            return { start: monday, end: sunday };
+        }
+        
+        function formatDate(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        
+        function formatDisplayDate(date) {
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const yyyy = date.getFullYear();
+            return `${dd}.${mm}.${yyyy}`;
+        }
+        
+        function getWeekNumber(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        }
+        
+        function updateWeekInfo() {
+            const selectedDate = datePicker.value;
+            if (!selectedDate) return;
+            
+            const { start, end } = getWeekDatesFromDate(selectedDate);
+            const weekNumber = getWeekNumber(start);
+            
+            weekInfo.innerHTML = `
+                <div style="margin-bottom: 5px;"><strong>Выбранная неделя:</strong> Неделя ${weekNumber}, ${start.getFullYear()}</div>
+                <strong>Период:</strong> ${formatDisplayDate(start)} — ${formatDisplayDate(end)}
+            `;
+        }
+
+        function addWeeks(date, weeks) {
+            const newDate = new Date(date);
+            newDate.setDate(date.getDate() + (weeks * 7));
+            return newDate;
+        }
+
+        if (button) {
+            button.addEventListener('htmx:configRequest', function(evt) {
+                const selectedDate = datePicker.value;
+                
+                if (!selectedDate) {
+                    evt.preventDefault();
+                    alert('Пожалуйста, выберите дату');
+                    return;
+                }
+                
+                const { start, end } = getWeekDatesFromDate(selectedDate);
+                
+                evt.detail.parameters['start'] = formatDate(start);
+                evt.detail.parameters['end'] = formatDate(end);
+                
+                console.log('Параметры запроса:', evt.detail.parameters);
+            });
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('htmx:configRequest', function(evt) {
+                const currentDate = datePicker.value;
+                if (!currentDate) return;
+                
+                const prevWeekDate = addWeeks(new Date(currentDate), -1);
+                const { start, end } = getWeekDatesFromDate(formatDate(prevWeekDate));
+                
+                evt.detail.parameters['start'] = formatDate(start);
+                evt.detail.parameters['end'] = formatDate(end);
+                
+                datePicker.value = formatDate(prevWeekDate);
+                updateWeekInfo();
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('htmx:configRequest', function(evt) {
+                const currentDate = datePicker.value;
+                if (!currentDate) return;
+                
+                const nextWeekDate = addWeeks(new Date(currentDate), 1);
+                const { start, end } = getWeekDatesFromDate(formatDate(nextWeekDate));
+                
+                evt.detail.parameters['start'] = formatDate(start);
+                evt.detail.parameters['end'] = formatDate(end);
+                
+                datePicker.value = formatDate(nextWeekDate);
+                updateWeekInfo();
+            });
+        }
+
+        if (currentBtn) {
+            currentBtn.addEventListener('htmx:configRequest', function(evt) {
+                const today = new Date();
+                const { start, end } = getWeekDatesFromDate(formatDate(today));
+                
+                evt.detail.parameters['start'] = formatDate(start);
+                evt.detail.parameters['end'] = formatDate(end);
+                
+                datePicker.value = formatDate(today);
+                updateWeekInfo();
+            });
+        }
+        
+        const today = new Date();
+        datePicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        
+        datePicker.addEventListener('change', updateWeekInfo);
+        updateWeekInfo();
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.week-selector').forEach(initWeekSelector);
+    });
+    
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        const target = evt.detail.target;
+        if (target.classList && target.classList.contains('week-selector')) {
+            initWeekSelector(target);
+        } else {
+            target.querySelectorAll('.week-selector').forEach(initWeekSelector);
+        }
+    });
+</script>
 {{end}}

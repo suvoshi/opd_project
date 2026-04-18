@@ -1,3 +1,16 @@
 {{define "teacher_personal_account"}}
-<h2>ЛК учителя здесь</h2>
+
+<h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Личный кабинет студента</h2>
+
+<div class="container-for-LK">
+    <div class="student-card left">
+        <h3>{{ .Teacher.LastName }} {{ .Teacher.FirstName }}</h3>
+        <h3>{{ .Teacher.Patronymic }}</h3>
+    </div>
+
+    <div class="student-card left">
+        <p>Дата рождения: {{ .Teacher.BirthDate.Format "02.01.2006" }}</p>
+    </div>
+</div>
+
 {{end}}

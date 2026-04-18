@@ -36,6 +36,7 @@ func InitTemplates() {
 		"templates/teacher/dashboard.html",
 		"templates/teacher/personal_account.html",
 		"templates/teacher/schedule.html",
+		"templates/teacher/schedule_part.html",
 		"templates/teacher/disciplines.html",
 		"templates/teacher/disciplines_part_group.html",
 		"templates/teacher/disciplines_part_table.html",

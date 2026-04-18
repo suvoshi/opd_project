@@ -1,6 +1,6 @@
 {{ define "teacher_disciplines"}}
 <!-- disciplines-partial.html -->
-<div class="disciplines-list">
+<div class="disciplines-list" id="disciplines-container-main">
     <h2>📚 Мои дисциплины</h2>
     
     {{range .GroupDisciplines}}
@@ -15,7 +15,7 @@
         <!-- Кнопка для загрузки групп с передачей ID дисциплины -->
         <button class="show-groups-btn"
                 hx-post="/teacher/disciplines_part_group/"
-                hx-target="#groups-container-{{.ID}}"
+                hx-target="#disciplines-container-main"
                 hx-trigger="click"
                 hx-indicator="#spinner-{{.ID}}"
                 hx-vals='js:{"id_discipline": "{{.ID}}"}'

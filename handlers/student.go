@@ -87,9 +87,14 @@ func StudentDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result = config.DB.
-		Where("(date BETWEEN ? AND ?) AND visibility <= 1", weekAgo, now).
+		Where("(date BETWEEN ? AND ?) AND visibility <= 0", weekAgo, now).
 		Order("date DESC").
 		Find(&data.AnnouncementData)
+
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
 
 	templates.ExecuteTemplate(w, "dashboard", data)
 	slog.Info("StudentDashboardHandler - Успешно", "id_user", session.UserID)
