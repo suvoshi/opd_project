@@ -1,10 +1,10 @@
 {{define "teacher_disciplines_part_group"}}
 <!-- groups-partial.html -->
 <div class="groups-list">
-    <h4>👥 Группы по дисциплине "{{(index . 0).Discipline.Name}}"</h4>
+    <h4>👥 Группы по дисциплине "{{(index .GroupDisciplines 0).Discipline.Name}}"</h4>
     
-    {{if .}}
-        {{range .}}
+    {{if .GroupDisciplines}}
+        {{range .GroupDisciplines}}
         <div class="group-item" data-group-id="{{.ID}}">
             <strong>{{.Group.GroupSign}}</strong>
             <span class="group-info">
