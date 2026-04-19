@@ -1,7 +1,7 @@
 {{define "teacher_disciplines_part_group"}}
 <!-- groups-partial.html -->
 <div class="groups-list" id="disciplines-container-group">
-    <h4>👥 Группы по дисциплине "{{(index .GroupDisciplines 0).Discipline.Name}}"</h4>
+    <h2>Группы по дисциплине "{{(index .GroupDisciplines 0).Discipline.Name}}"</h2>
     
     {{if .GroupDisciplines}}
         {{range .GroupDisciplines}}
@@ -20,7 +20,6 @@
                 Подробнее
             </button>
             
-            <div id="group-detail-{{.ID}}" class="group-detail"></div>
         </div>
         {{end}}
     {{else}}
@@ -29,16 +28,15 @@
 </div>
 
 <style>
-    .groups-list h4 {
+    .groups-list h2 {
         margin: 0 0 10px 0;
-        color: #2c3e50;
     }
     .group-item {
         padding: 10px;
         margin: 8px 0;
         background: white;
         border-radius: 4px;
-        border-left: 3px solid #2ecc71;
+        border-left: 3px solid #014770d0;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -50,10 +48,10 @@
         font-size: 14px;
     }
     .group-detail-btn {
-        background: #2ecc71;
+        background: #014770d0;
         color: white;
         border: none;
-        padding: 5px 15px;
+        padding: 5px 5px;
         border-radius: 4px;
         cursor: pointer;
         font-size: 12px;
