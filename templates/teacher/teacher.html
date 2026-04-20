@@ -50,15 +50,15 @@
     </div>
 
     <script>
-    let isFirstLoad = true;
-    
-    document.body.addEventListener('htmx:load', function() {
-        if (isFirstLoad) {
-            isFirstLoad = false;
-            htmx.ajax('GET', '/teacher/dashboard', {target: '#main-content', swap: 'innerHTML'});
-        }
-    });
-</script>
+        let isFirstLoad = true;
+        
+        document.body.addEventListener('htmx:load', function() {
+            if (isFirstLoad) {
+                isFirstLoad = false;
+                htmx.ajax('GET', '/teacher/dashboard', {target: '#main-content', swap: 'innerHTML'});
+            }
+        });
+    </script>
 </body>
 </html>
 {{end}}

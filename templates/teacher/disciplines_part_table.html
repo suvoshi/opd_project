@@ -9,7 +9,6 @@
             </svg>
             Назад
         </button>
-        <h1>Личный кабинет студента</h1>
     </div>
 
     <div class="container">
@@ -34,8 +33,15 @@
             </button>
 
             <div class="month-selector">
-                <label for="monthPicker"> Месяц:</label>
-                <input type="month" id="monthPicker" onchange="renderTable()">
+                <label for="monthPicker">Месяц:</label>
+                <input type="month" id="monthPicker" style="display: none;">
+                <div class="week-selector" style="display: inline-block;">
+                    <div class="selector" style="background: transparent; padding: 0; margin-bottom: 0;">
+                        <div class="date-input" style="padding-right: 0; margin-bottom: 0;">
+                            <input type="month" class="datePicker" style="padding: 8px 14px; border: 2px solid #d0d7e0; border-radius: 8px; font-size: 15px; background: #fff;">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -83,7 +89,7 @@
     <!-- ── Group Modal ── -->
     <div class="modal-overlay" id="groupModal">
         <div class="modal">
-            <h3>👥 Выбор группы</h3>
+            <h3>Выбор группы</h3>
             <select id="groupSelect">
                 <option disabled value="">Выберите группу</option>
                 <option value="5130902/40001">5130902/40001</option>
@@ -120,19 +126,16 @@
         let selectedGroup = "5130902/40001";
         let currentTargetCell = null;
 
-        (function init() {
-            const now = new Date();
-            const yyyy = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            document.getElementById('monthPicker').value = `${yyyy}-${mm}`;
-            renderTable();
-        })();
+        // Функция для получения количества дней в месяце
+        function getDaysInMonth(year, month) {
+            return new Date(year, month, 0).getDate();
+        }
 
         function renderTable() {
             const monthInput = document.getElementById('monthPicker').value;
             if (!monthInput) return;
             const [year, month] = monthInput.split('-').map(Number);
-            const daysInMonth = new Date(year, month, 0).getDate();
+            const daysInMonth = getDaysInMonth(year, month);
 
             const thead = document.querySelector('#journalTable thead');
             const tbody = document.querySelector('#journalTable tbody');
@@ -161,15 +164,15 @@
                 bodyHTML += `<td class="num-cell">${s.id}</td>`;
                 bodyHTML += `<td class="student-cell">${s.name}</td>`;
                 for (let d = 1; d <= daysInMonth; d++) {
-                    const key = `${s.id}-${d}`;
+                    const key = `${s.id}-${year}-${month}-${d}`;
                     const cellData = journalData[key];
                     const val = cellData ? cellData.value : '';
                     const cls = getCellClass(val);
-                    bodyHTML += `<td class="grade-cell ${cls}" data-student="${si}" data-day="${d}" onclick="openPicker(event, ${si}, ${d})">${val}</td>`;
+                    bodyHTML += `<td class="grade-cell ${cls}" data-student="${si}" data-day="${d}" data-year="${year}" data-month="${month}" onclick="openPicker(event, ${si}, ${d}, ${year}, ${month})">${val}</td>`;
                 }
-                const final = calcFinal(s.id, daysInMonth);
+                const final = calcFinal(s.id, year, month, daysInMonth);
                 const fcls = getCellClass(final);
-                bodyHTML += `<td class="final-cell ${fcls}" id="final-${s.id}">${final}</td></tr>`;
+                bodyHTML += `<td class="final-cell ${fcls}" id="final-${s.id}-${year}-${month}">${final}</td></tr>`;
             });
             tbody.innerHTML = bodyHTML;
         }
@@ -181,10 +184,10 @@
             return map[val] || '';
         }
 
-        function calcFinal(studentId, daysInMonth) {
+        function calcFinal(studentId, year, month, daysInMonth) {
             let sum = 0, count = 0;
             for (let d = 1; d <= daysInMonth; d++) {
-                const key = `${studentId}-${d}`;
+                const key = `${studentId}-${year}-${month}-${d}`;
                 const cell = journalData[key];
                 if (cell && ['5', '4', '3', '2', '1'].includes(cell.value)) {
                     sum += parseInt(cell.value);
@@ -199,17 +202,17 @@
             const monthInput = document.getElementById('monthPicker').value;
             if (!monthInput) return;
             const [year, month] = monthInput.split('-').map(Number);
-            const daysInMonth = new Date(year, month, 0).getDate();
+            const daysInMonth = getDaysInMonth(year, month);
             students.forEach(s => {
-                const final = calcFinal(s.id, daysInMonth);
-                const el = document.getElementById(`final-${s.id}`);
+                const final = calcFinal(s.id, year, month, daysInMonth);
+                const el = document.getElementById(`final-${s.id}-${year}-${month}`);
                 if (el) { el.textContent = final; el.className = 'final-cell ' + getCellClass(final); }
             });
         }
 
-        function openPicker(e, si, day) {
+        function openPicker(e, si, day, year, month) {
             e.stopPropagation();
-            currentTargetCell = [si, day];
+            currentTargetCell = [si, day, year, month];
             const popup = document.getElementById('pickerPopup');
             const overlay = document.getElementById('pickerOverlay');
             const rect = e.target.getBoundingClientRect();
@@ -227,11 +230,11 @@
 
         function pickValue(val, type) {
             if (!currentTargetCell) return;
-            const [si, day] = currentTargetCell;
-            const key = `${students[si].id}-${day}`;
+            const [si, day, year, month] = currentTargetCell;
+            const key = `${students[si].id}-${year}-${month}-${day}`;
             if (type === 'clear') delete journalData[key];
             else journalData[key] = { value: val, type };
-            document.querySelectorAll(`td[data-student="${si}"][data-day="${day}"]`).forEach(cell => {
+            document.querySelectorAll(`td[data-student="${si}"][data-day="${day}"][data-year="${year}"][data-month="${month}"]`).forEach(cell => {
                 cell.textContent = val;
                 cell.className = 'grade-cell ' + getCellClass(val);
             });
@@ -264,17 +267,394 @@
             setTimeout(() => toast.classList.remove('show'), 2500);
         }
 
+        // Инициализация monthPicker через кастомный селектор
+        function initMonthSelector() {
+            const datePicker = document.querySelector('.datePicker');
+            if (!datePicker) return;
+            
+            const monthPicker = document.getElementById('monthPicker');
+            
+            function updateMonth() {
+                if (datePicker.value) {
+                    monthPicker.value = datePicker.value;
+                    renderTable();
+                }
+            }
+            
+            datePicker.addEventListener('change', updateMonth);
+            
+            // Установка текущего месяца
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const currentMonth = `${yyyy}-${mm}`;
+            datePicker.value = currentMonth;
+            monthPicker.value = currentMonth;
+            
+            renderTable();
+        }
+
         (function loadSaved() {
             const raw = localStorage.getItem('schoolJournal');
-            if (!raw) return;
+            if (!raw) {
+                initMonthSelector();
+                return;
+            }
             try {
                 const data = JSON.parse(raw);
                 if (data.group) { selectedGroup = data.group; document.getElementById('groupLabel').textContent = `Группа: ${data.group}`; }
-                if (data.month) document.getElementById('monthPicker').value = data.month;
+                if (data.month) {
+                    document.getElementById('monthPicker').value = data.month;
+                    const datePicker = document.querySelector('.datePicker');
+                    if (datePicker) datePicker.value = data.month;
+                }
                 if (data.entries) journalData = data.entries;
             } catch (e) { }
+            initMonthSelector();
         })();
     </script>
 </body>
+
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f0f2f5;
+        color: #333;
+        min-height: 100vh;
+    }
+
+    /* ── Top Navigation Bar ── */
+    .top-nav {
+        background: #014770d0;
+        color: #fff;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        border-radius: 8px;
+    }
+    .back-btn {
+        background: rgba(255,255,255,0.1);
+        border: none;
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.2); }
+    .top-nav h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.3px; }
+
+    .container { margin: 0 auto; padding: 20px; }
+
+    /* ── Top bar ── */
+    .top-bar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+    .btn {
+        padding: 10px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-save { background: #014770d0; color: #fff; }
+    .btn-save:hover {
+        background: #014770d0;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59,125,216,0.4);
+    }
+    .btn-group {
+        background: #fff;
+        color: #014770d0;
+        border: 2px solid #014770d0;
+    }
+    .btn-group:hover {
+        background: #ebf3fd;
+        transform: translateY(-1px);
+    }
+    .month-selector {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+    }
+    .month-selector label { font-weight: 600; font-size: 15px; color: #555; }
+    .month-selector input[type="month"] {
+        padding: 8px 14px;
+        border: 2px solid #d0d7e0;
+        border-radius: 8px;
+        font-size: 15px;
+        color: #333;
+        background: #fff;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .month-selector input[type="month"]:focus { border-color: #014770d0; }
+
+    /* ── Card ─ */
+    .card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        overflow: hidden;
+    }
+    .card-header {
+        background: #014770d0;
+        color: #fff;
+        padding: 16px 24px;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .card-header h2 { font-size: 18px; font-weight: 600; }
+    .card-header .group-name { font-size: 14px; opacity: 0.85; }
+
+    /* ── Table wrapper ── */
+    .table-wrapper {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 80vh;
+    }
+
+    /* ── Table ── */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        min-width: 800px;
+    }
+    thead th {
+        background: #eaf1fb;
+        padding: 8px 4px;
+        text-align: center;
+        font-weight: 600;
+        color: #333;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        white-space: nowrap;
+    }
+    thead th.day-header { min-width: 32px; width: 32px; }
+    thead th.final-header { min-width: 100px; }
+    thead th.student-header {
+        min-width: 200px;
+        text-align: left;
+        padding-left: 16px;
+        position: sticky;
+        left: 0;
+        z-index: 11;
+    }
+    thead th.num-header {
+        min-width: 80px;
+        width: 80px;
+        position: sticky;
+        left: 0;
+        z-index: 11;
+    }
+    .month-row th { font-size: 12px; padding: 4px; }
+
+    tbody td {
+        border: 1px solid #e2e8f0;
+        text-align: center;
+        padding: 0;
+        height: 36px;
+        position: relative;
+    }
+    tbody td.student-cell {
+        text-align: left;
+        padding-left: 16px;
+        font-weight: 500;
+        white-space: nowrap;
+        position: sticky;
+        left: 0;
+        background: #fff;
+        z-index: 5;
+    }
+    tbody td.num-cell {
+        font-weight: 600;
+        color: #888;
+        position: sticky;
+        left: 0;
+        background: #fff;
+        z-index: 5;
+        min-width: 80px;
+        width: 80px;
+        text-align: center;
+    }
+    tbody td.grade-cell {
+        cursor: pointer;
+        transition: background 0.15s;
+        font-weight: 700;
+        font-size: 14px;
+        user-select: none;
+    }
+    tbody td.grade-cell:hover { background: #e8f0fe; }
+    tbody td.final-cell {
+        background: #f8fafb;
+        font-weight: 700;
+        font-size: 15px;
+        min-width: 100px;
+    }
+
+    /* Grade colours */
+    .grade-5 { color: #2e7d32; background: #e8f5e9 !important; }
+    .grade-4 { color: #1565c0; background: #e3f2fd !important; }
+    .grade-3 { color: #e65100; background: #fff3e0 !important; }
+    .grade-2 { color: #c62828; background: #ffebee !important; }
+    .grade-1 { color: #b71c1c; background: #ffebee !important; }
+
+    /* Attendance colours */
+    .attendance-я { color: #2e7d32; background: #e8f5e9 !important; }
+    .attendance-н { color: #c62828; background: #ffebee !important; }
+    .attendance-б { color: #f57f17; background: #fff8e1 !important; }
+    .attendance-до { color: #6a1b9a; background: #f3e5f5 !important; }
+
+    /* Row hover & stripes */
+    tbody tr:hover td { background: #f5f8ff; }
+    tbody tr:hover td.student-cell,
+    tbody tr:hover td.num-cell { background: #f5f8ff; }
+    tbody tr:nth-child(even) td { background: #fafbfd; }
+    tbody tr:nth-child(even) td.student-cell,
+    tbody tr:nth-child(even) td.num-cell { background: #fafbfd; }
+
+    /* ── Popup picker ── */
+    .picker-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: 100;
+    }
+    .picker-overlay.active { display: block; }
+    .picker-popup {
+        display: none;
+        position: fixed;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        padding: 8px;
+        z-index: 200;
+        min-width: 180px;
+    }
+    .picker-popup.active { display: block; }
+    .picker-popup .section-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #999;
+        padding: 6px 10px 2px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    .picker-popup .picker-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 4px;
+    }
+    .picker-popup .picker-option {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 15px;
+        transition: all 0.15s;
+        border: 2px solid transparent;
+    }
+    .picker-option:hover {
+        transform: scale(1.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .picker-option.grade-opt-5 { background: #e8f5e9; color: #2e7d32; }
+    .picker-option.grade-opt-4 { background: #e3f2fd; color: #1565c0; }
+    .picker-option.grade-opt-3 { background: #fff3e0; color: #e65100; }
+    .picker-option.grade-opt-2 { background: #ffebee; color: #c62828; }
+    .picker-option.grade-opt-1 { background: #ffebee; color: #b71c1c; }
+    .picker-option.att-opt-я { background: #e8f5e9; color: #2e7d32; }
+    .picker-option.att-opt-н { background: #ffebee; color: #c62828; }
+    .picker-option.att-opt-б { background: #fff8e1; color: #f57f17; }
+    .picker-option.att-opt-до { background: #f3e5f5; color: #6a1b9a; }
+    .picker-option.clear-opt { background: #f5f5f5; color: #999; font-size: 18px; }
+    .divider { height: 1px; background: #e8ecf0; margin: 4px 8px; }
+
+    /* ── Toast ─ */
+    .toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: #2e7d32;
+        color: #fff;
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 15px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.35s;
+        z-index: 300;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── Group modal ── */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.4);
+        z-index: 500;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+        background: #fff;
+        border-radius: 16px;
+        padding: 32px;
+        width: 420px;
+        max-width: 90vw;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    }
+    .modal h3 { font-size: 20px; margin-bottom: 20px; color: #333; }
+    .modal select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #d0d7e0;
+        border-radius: 10px;
+        font-size: 15px;
+        color: #333;
+        background: #fff;
+        outline: none;
+        margin-bottom: 20px;
+        transition: border-color 0.2s;
+    }
+    .modal select:focus { border-color: #014770d0; }
+    .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+    .modal-actions .btn { padding: 10px 28px; }
+    .btn-cancel { background: #f0f0f0; color: #666; }
+    .btn-cancel:hover { background: #e0e0e0; }
+    .btn-confirm { background: #014770d0; color: #fff; }
+    .btn-confirm:hover { background: #014770d0; }
+</style>
 
 {{end}}

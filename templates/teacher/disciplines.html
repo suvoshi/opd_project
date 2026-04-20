@@ -1,37 +1,37 @@
 {{ define "teacher_disciplines"}}
-<!-- disciplines-partial.html -->
+<body>
 
-<h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Дисциплины</h2>
+    <h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Дисциплины</h2>
 
-<div class="disciplines-list" id="disciplines-container-main">
-    <h2>Мои дисциплины</h2>
-    
-    {{range .GroupDisciplines}}
-    <div class="discipline-card" 
-         data-discipline-id="{{.ID}}"
-         data-discipline-name="{{.Discipline.Name}}">
-        <div class="discipline-info">
-            <h3>{{.Discipline.Name}}</h3>
-            <p>Часов: {{.Discipline.Hours}}</p>
-        </div>
+    <div class="disciplines-list" id="disciplines-container-main">
+        <h2>Мои дисциплины</h2>
         
-        <!-- Кнопка для загрузки групп с передачей ID дисциплины -->
-        <button class="show-groups-btn"
-                hx-post="/teacher/disciplines_part_group/"
-                hx-target="#disciplines-container-main"
-                hx-trigger="click"
-                hx-indicator="#spinner-{{.ID}}"
-                hx-vals='js:{"id_discipline": "{{.ID}}"}'
-                hx-swap="innerHTML">
-            Показать группы
-        </button>
+        {{range .GroupDisciplines}}
+        <div class="discipline-card" 
+            data-discipline-id="{{.ID}}"
+            data-discipline-name="{{.Discipline.Name}}">
+            <div class="discipline-info">
+                <h3>{{.Discipline.Name}}</h3>
+                <p>Часов: {{.Discipline.Hours}}</p>
+            </div>
+            
+            <!-- Кнопка для загрузки групп с передачей ID дисциплины -->
+            <button class="show-groups-btn"
+                    hx-post="/teacher/disciplines_part_group/"
+                    hx-target="#disciplines-container-main"
+                    hx-trigger="click"
+                    hx-indicator="#spinner-{{.ID}}"
+                    hx-vals='js:{"id_discipline": "{{.ID}}"}'
+                    hx-swap="innerHTML">
+                Показать группы
+            </button>
+        </div>
+        {{end}}
     </div>
-    {{end}}
-</div>
+</body>
 
 <style>
     .disciplines-list {
-        max-width: 800px;
         margin: 0 auto;
     }
     .discipline-card {
