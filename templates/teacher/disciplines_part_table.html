@@ -1,13 +1,18 @@
 {{define "teacher_disciplines_part_table"}}
 <body>
+    <h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Дисциплины</h2>
 
     <!-- ── Top Navigation Bar ── -->
     <div class="top-nav">
-        <button class="back-btn" onclick="history.back()">
+        <button class="back-btn" 
+                hx-post="/teacher/disciplines_part_group/" 
+                hx-target="#disciplines-container-group" 
+                hx-trigger="click"
+                hx-vals='js:{"group_id": "{{.GroupID}}", "discipline_id": "{{.DisciplineID}}"}'>
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
-            Назад
+            Назад к группам
         </button>
     </div>
 

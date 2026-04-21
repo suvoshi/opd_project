@@ -1,7 +1,22 @@
 {{define "teacher_disciplines_part_group"}}
 <!-- groups-partial.html -->
 <div class="groups-list" id="disciplines-container-group">
-    <h2>Группы по дисциплине "{{(index .GroupDisciplines 0).Discipline.Name}}"</h2>
+    <h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Дисциплины</h2>
+
+    <div class="top-nav">
+        <button class="back-btn" 
+                hx-post="/teacher/disciplines/" 
+                hx-target="#disciplines-container-group" 
+                hx-trigger="click"
+                hx-swap="innerHTML">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            Назад к дисциплинам
+        </button>
+    </div>
+
+    <h2 style="margin-top: 50px;">Группы по дисциплине "{{(index .GroupDisciplines 0).Discipline.Name}}"</h2>
     
     {{if .GroupDisciplines}}
         {{range .GroupDisciplines}}
@@ -28,6 +43,34 @@
 </div>
 
 <style>
+    .top-nav {
+        background: #014770d0;
+        color: #fff;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        border-radius: 8px;
+    }
+    .back-btn {
+        background: rgba(255,255,255,0.1);
+        border: none;
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.2); }
+    .top-nav h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.3px; }
+
+    .container { margin: 0 auto; padding: 20px; }
+
     .groups-list h2 {
         margin: 0 0 10px 0;
     }
