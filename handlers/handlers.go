@@ -3,8 +3,11 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"html/template"
 	"net/http"
+	"opd_project/models"
+	"time"
 	//"strconv"
 )
 
@@ -23,26 +26,119 @@ func generateSessionID() string {
 
 // InitTemplates загружает все HTML шаблоны при старте
 func InitTemplates() {
-	templates = template.Must(template.ParseFiles(
-		"templates/index.html",
-		"templates/login.html",
-		"templates/student/student.html",
-		"templates/student/personal_account.html",
-		"templates/student/schedule.html",
-		"templates/student/schedule_part.html",
-		"templates/student/discipline_progress.html",
-		"templates/student/dashboard.html",
-		"templates/teacher/teacher.html",
-		"templates/teacher/dashboard.html",
-		"templates/teacher/personal_account.html",
-		"templates/teacher/schedule.html",
-		"templates/teacher/schedule_part.html",
-		"templates/teacher/disciplines.html",
-		"templates/teacher/disciplines_part_group.html",
-		"templates/teacher/disciplines_part_table.html",
-		"templates/tutor/tutor.html",
-		"templates/error.html",
-	))
+	// Создаём карту функций для шаблонов
+	funcMap := template.FuncMap{
+		// Арифметические функции
+		"add": func(a, b int) int {
+			return a + b
+		},
+		"sub": func(a, b int) int {
+			return a - b
+		},
+		"mul": func(a, b int) int {
+			return a * b
+		},
+
+		// Функции для форматирования
+		"formatDate": func(t time.Time) string {
+			return t.Format("02.01.2006")
+		},
+		"formatDateTime": func(t time.Time) string {
+			return t.Format("02.01.2006 15:04")
+		},
+
+		// Функции для работы с Action
+		"getGradeValue": func(action models.Action) int {
+			return action.Grade
+		},
+		"getAttendanceValue": func(action models.Action) string {
+			attendanceMap := map[int]string{
+				0: "Я",
+				1: "Н",
+				2: "Б",
+				3: "ДО",
+			}
+			if val, ok := attendanceMap[int(action.Attendance)]; ok {
+				return val
+			}
+			return ""
+		},
+		"getGradeDisplay": func(action models.Action) string {
+			if action.Grade != 0 {
+				return fmt.Sprintf("%d", action.Grade)
+			}
+			return "—"
+		},
+		"getAttendanceDisplay": func(action models.Action) string {
+			attendanceMap := map[int]string{
+				0: "Я",
+				1: "Н",
+				2: "Б",
+				3: "ДО",
+			}
+			if val, ok := attendanceMap[int(action.Attendance)]; ok {
+				return val
+			}
+			return "—"
+		},
+		"formatCell": func(action models.Action) string {
+			if action.Grade != 0 {
+				return fmt.Sprintf("%d", action.Grade)
+			}
+			attendanceMap := map[int]string{
+				0: "Я",
+				1: "Н",
+				2: "Б",
+				3: "ДО",
+			}
+			if val, ok := attendanceMap[int(action.Attendance)]; ok {
+				return val
+			}
+			return "—"
+		},
+
+		// Функция для получения значения по индексу
+		"getAction": func(actions [][]models.Action, i, j int) models.Action {
+			if i < len(actions) && j < len(actions[i]) {
+				return actions[i][j]
+			}
+			return models.Action{}
+		},
+
+		// Функция для безопасного доступа к слайсу
+		"index": func(slice []models.Lesson, idx int) models.Lesson {
+			if idx >= 0 && idx < len(slice) {
+				return slice[idx]
+			}
+			return models.Lesson{}
+		},
+	}
+
+	// Создаём шаблон с функциями и парсим файлы
+	templates = template.Must(
+		template.New("").
+			Funcs(funcMap).
+			ParseFiles(
+				"templates/index.html",
+				"templates/login.html",
+				"templates/student/student.html",
+				"templates/student/personal_account.html",
+				"templates/student/schedule.html",
+				"templates/student/schedule_part.html",
+				"templates/student/discipline_progress.html",
+				"templates/student/dashboard.html",
+				"templates/teacher/teacher.html",
+				"templates/teacher/dashboard.html",
+				"templates/teacher/personal_account.html",
+				"templates/teacher/schedule.html",
+				"templates/teacher/schedule_part.html",
+				"templates/teacher/disciplines.html",
+				"templates/teacher/disciplines_part_group.html",
+				"templates/teacher/disciplines_part_table.html",
+				"templates/tutor/tutor.html",
+				"templates/error.html",
+			),
+	)
 }
 
 // Основные страницы

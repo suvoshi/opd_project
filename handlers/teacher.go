@@ -1,12 +1,16 @@
 package handlers
 
 import (
+	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"opd_project/config"
 	"opd_project/models"
 	"strconv"
 	"time"
+
+	"gorm.io/gorm"
 	//"strconv"
 )
 
@@ -31,6 +35,14 @@ type TeacherDisciplinesData struct {
 
 type TeacherDisciplinesPartGroupData struct {
 	GroupDisciplines []models.GroupDiscipline
+}
+
+type TeacherDisciplinesPartTableData struct {
+	GroupName      string
+	DisciplineName string
+	Students       []models.Student
+	Lessons        []models.Lesson
+	Actions        [][]models.Action
 }
 
 // Дашборд
@@ -277,10 +289,156 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
 		return
 	}
-	_, err := r.Cookie("id_session")
+	cookie, err := r.Cookie("id_session")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	templates.ExecuteTemplate(w, "teacher_disciplines_part_table", nil)
+
+	// находим учителя
+	var session models.Session
+	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+	slog.Info("TeacherDisciplinesPartTableHandler - Пытаемся найти учителя", "id_user", session.UserID)
+	var teacher models.Teacher
+	result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+
+	id_group, _ := strconv.Atoi(r.FormValue("id_group"))
+	id_discipline, _ := strconv.Atoi(r.FormValue("id_discipline"))
+
+	// добавить проверку на возможность редактирования (никто другой не редактирует)
+
+	data := TeacherDisciplinesPartTableData{}
+
+	var disc models.Discipline
+	result = config.DB.Where("id = ?", id_discipline).First(&disc)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+	var group models.Group
+	result = config.DB.Where("id = ?", id_group).First(&group)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+
+	data.DisciplineName = disc.Name
+	data.GroupName = group.GroupSign
+
+	result = config.DB.
+		Where("id_group = ?", id_group).
+		Find(&data.Students)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+	result = config.DB.
+		Where("id_discipline = ?", id_discipline).
+		Find(&data.Lessons)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+
+	data.Actions = make([][]models.Action, len(data.Students))
+	for i, student := range data.Students {
+		row := make([]models.Action, len(data.Lessons))
+		for j, lesson := range data.Lessons {
+			result = config.DB.
+				Where("id_student = ? AND id_lesson = ?", student.ID, lesson.ID).
+				Find(&row[j]) // нужно ли тут "&" ?
+			if result.Error != nil {
+				templates.ExecuteTemplate(w, "error", errorServerSide)
+				return
+			}
+		}
+		data.Actions[i] = row
+	}
+
+	templates.ExecuteTemplate(w, "teacher_disciplines_part_table", data)
+	slog.Info("TeacherDisciplinesPartTableHandler - Успешно", "id_user", session.UserID)
+}
+
+// Cохранение журнала
+func TeacherJournalSaveHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("HX-Request") != "true" {
+		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
+		return
+	}
+
+	var request struct {
+		GroupID      int `json:"group_id"`
+		DisciplineID int `json:"discipline_id"`
+		Changes      []struct {
+			StudentID  int     `json:"student_id"`
+			LessonID   int     `json:"lesson_id"`
+			Grade      *int    `json:"grade"`
+			Attendance *string `json:"attendance"`
+		} `json:"changes"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Сохраняем изменения в БД
+	for _, change := range request.Changes {
+		var action models.Action
+
+		result := config.DB.Where("id_student = ? AND id_lesson = ?",
+			change.StudentID, change.LessonID).First(&action)
+
+		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			slog.Error("Ошибка поиска записи", "error", result.Error)
+			continue
+		}
+
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// Создаём новую запись
+			action = models.Action{
+				StudentID: change.StudentID,
+				LessonID:  change.LessonID,
+			}
+		}
+
+		// Обновляем поля
+		if change.Grade != nil {
+			action.Grade = *change.Grade
+		}
+		if change.Attendance != nil {
+			action.Attendance = parseAttendance(*change.Attendance)
+		}
+
+		config.DB.Save(&action)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Журнал сохранён",
+	})
+}
+
+func parseAttendance(s string) models.AttendanceType {
+	switch s {
+	case "Я":
+		return models.Present
+	case "Н":
+		return models.Absent
+	case "Б":
+		return models.Sick
+	case "ДО":
+		return models.DO
+	default:
+		return models.Present
+	}
 }

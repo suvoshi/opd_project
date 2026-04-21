@@ -16,7 +16,7 @@
         </button>
     </div>
 
-    <h2 style="margin-top: 50px;">Группы по дисциплине "{{(index .GroupDisciplines 0).Discipline.Name}}"</h2>
+    <h2 style="margin-top: 50px;">Группы по дисциплине</h2>
     
     {{if .GroupDisciplines}}
         {{range .GroupDisciplines}}
@@ -31,7 +31,7 @@
                     hx-post="/teacher/disciplines_part_table/"
                     hx-target="#disciplines-container-group"
                     hx-trigger="click"
-                    hx-vals='js:{"group_id": "{{.ID}}", "discipline_id": "{{.DisciplineID}}"}'>
+                    hx-vals='js:{"id_group": "{{.GroupID}}", "id_discipline": "{{.DisciplineID}}"}'>
                 Подробнее
             </button>
             

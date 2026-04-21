@@ -1,665 +1,338 @@
 {{define "teacher_disciplines_part_table"}}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
+        .journal-container { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); overflow-x: auto; max-height: 70vh; }
+        .journal-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
+        .journal-table th { background: #014770d0; color: white; padding: 12px 8px; text-align: center; position: sticky; top: 0; z-index: 10; }
+        .journal-table th.student-col { position: sticky; left: 0; z-index: 11; background: #014770d0; min-width: 200px; text-align: left; padding-left: 16px; }
+        .journal-table th.number-col { position: sticky; left: 0; z-index: 11; background: #014770d0; width: 50px; }
+        .journal-table td { border: 1px solid #e2e8f0; text-align: center; padding: 8px 4px; height: 45px; }
+        .journal-table td.student-cell { text-align: left; padding-left: 16px; font-weight: 500; position: sticky; left: 0; background: white; z-index: 5; }
+        .journal-table td.number-cell { position: sticky; left: 0; background: white; z-index: 5; font-weight: 600; color: #666; }
+        .grade-cell { cursor: pointer; transition: background 0.2s; font-weight: 600; }
+        .grade-cell:hover { background: #e8f0fe !important; }
+        .grade-5 { background: #e8f5e9; color: #2e7d32; }
+        .grade-4 { background: #e3f2fd; color: #1565c0; }
+        .grade-3 { background: #fff3e0; color: #e65100; }
+        .grade-2 { background: #ffebee; color: #c62828; }
+        .attendance-Я { background: #e8f5e9; color: #2e7d32; }
+        .attendance-Н { background: #ffebee; color: #c62828; }
+        .attendance-Б { background: #fff8e1; color: #f57f17; }
+        .attendance-ДО { background: #f3e5f5; color: #6a1b9a; }
+        .toolbar { display: flex; gap: 15px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
+        .btn { padding: 10px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: #014770d0; color: white; }
+        .btn-primary:hover { background: #014770; transform: translateY(-1px); }
+        .info-bar { background: #e9ecef; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #014770; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border-radius: 12px; width: 300px; text-align: center; }
+        .grade-buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; }
+        .grade-btn { width: 50px; height: 50px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
+        .grade-btn:hover { transform: scale(1.1); }
+        .grade-5-btn { background: #e8f5e9; color: #2e7d32; }
+        .grade-4-btn { background: #e3f2fd; color: #1565c0; }
+        .grade-3-btn { background: #fff3e0; color: #e65100; }
+        .grade-2-btn { background: #ffebee; color: #c62828; }
+        .attendance-buttons { display: flex; gap: 10px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .att-btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .close-btn { background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; margin: 5px; }
+        .toast { position: fixed; bottom: 30px; right: 30px; background: #2e7d32; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; z-index: 1000; animation: fadeOut 2s forwards; }
+        @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+        .unsaved-indicator { position: fixed; bottom: 20px; left: 20px; background: #ff9800; color: white; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 1000; }
+        .hidden { display: none; }
+    </style>
+</head>
 <body>
-    <h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Дисциплины</h2>
+    <div class="container" style="padding: 20px;">
+        <div class="info-bar">
+            <div>
+                <strong>Группа:</strong> <span id="group-name">{{.GroupName}}</span>
+                <strong style="margin-left: 20px;">Дисциплина:</strong> <span id="discipline-name">{{.DisciplineName}}</span>
+            </div>
+            <div>
+                <strong>Уроков:</strong> {{len .Lessons}}
+                <strong style="margin-left: 20px;">Студентов:</strong> {{len .Students}}
+            </div>
+        </div>
 
-    <!-- ── Top Navigation Bar ── -->
-    <div class="top-nav">
-        <button class="back-btn" 
-                hx-post="/teacher/disciplines_part_group/" 
-                hx-target="#disciplines-container-group" 
-                hx-trigger="click"
-                hx-vals='js:{"group_id": "{{.GroupID}}", "discipline_id": "{{.DisciplineID}}"}'>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            Назад к группам
-        </button>
-    </div>
-
-    <div class="container">
-        <!-- ── Top bar ── -->
-        <div class="top-bar">
-            <button class="btn btn-save" onclick="saveJournal()">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-                    <polyline points="17,21 17,13 7,13 7,21" />
-                    <polyline points="7,3 7,8 15,8" />
-                </svg>
-                Сохранить
+        <div class="toolbar">
+            <button class="btn btn-primary" id="saveAllBtn">
+                💾 Сохранить все изменения
             </button>
-            <button class="btn btn-group" onclick="openGroupModal()">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                    <path d="M16 3.13a4 4 0 010 7.75" />
-                </svg>
-                Выбор группы
+            <button class="btn btn-primary" onclick="location.reload()">
+                🔄 Обновить
             </button>
-
-            <div class="month-selector">
-                <label for="monthPicker">Месяц:</label>
-                <input type="month" id="monthPicker" style="display: none;">
-                <div class="week-selector" style="display: inline-block;">
-                    <div class="selector" style="background: transparent; padding: 0; margin-bottom: 0;">
-                        <div class="date-input" style="padding-right: 0; margin-bottom: 0;">
-                            <input type="month" class="datePicker" style="padding: 8px 14px; border: 2px solid #d0d7e0; border-radius: 8px; font-size: 15px; background: #fff;">
-                        </div>
-                    </div>
-                </div>
+            <div id="saveSpinner" class="hidden">
+                <div class="spinner"></div> Сохранение...
             </div>
         </div>
 
-        <!-- ── Card ── -->
-        <div class="card">
-            <div class="card-header">
-                <h2>Журнал оценок</h2>
-                <span class="group-name" id="groupLabel">Группа: 5130902/40001</span>
-            </div>
+        <div class="journal-container">
+            <table class="journal-table" id="journalTable">
+                <thead>
+                    <tr>
+                        <th class="number-col">№</th>
+                        <th class="student-col">Ф.И.О. студента</th>
+                        {{range $idx, $lesson := .Lessons}}
+                        <th title="{{$lesson.DateBegin.Format "02.01.2006"}}">
+                            Урок {{add $idx 1}}<br>
+                            <small>{{$lesson.DateBegin.Format "02.01"}}</small>
+                        </th>
+                        {{end}}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $si, $student := .Students}}
+                    <tr data-student-id="{{$student.ID}}">
+                        <td class="number-cell">{{add $si 1}}</td>
+                        <td class="student-cell">{{$student.LastName}} {{$student.FirstName}}</td>
+                        {{range $li, $lesson := $.Lessons}}
+                        {{$action := index $.Actions $si $li}}
+                        <td class="grade-cell 
+                            {{if $action.Grade}}grade-{{$action.Grade}}{{end}}
+                            {{if and (not $action.Grade) $action.Attendance}}attendance-{{$action.Attendance | getAttendanceDisplay}}{{end}}"
+                            data-student="{{$student.ID}}"
+                            data-lesson="{{$lesson.ID}}"
+                            data-grade="{{$action.Grade}}"
+                            data-attendance="{{$action.Attendance}}"
+                            onclick="openEditModal(this)">
+                            <span class="grade-display">
+                                {{if $action.Grade}}
+                                    {{$action.Grade}}
+                                {{else if $action.Attendance}}
+                                    {{$action.Attendance | getAttendanceDisplay}}
+                                {{else}}
+                                    —
+                                {{end}}
+                            </span>
+                        </td>
+                        {{end}}
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-            <div class="table-wrapper">
-                <table id="journalTable">
-                    <thead><!-- Rendered by JS --></thead>
-                    <tbody><!-- Rendered by JS --></tbody>
-                </table>
+    <!-- Модальное окно -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Редактирование</h3>
+            <div id="modalStudentInfo" style="margin: 10px 0; color: #666;"></div>
+            <div id="modalLessonInfo" style="margin: 10px 0; color: #666;"></div>
+            
+            <div class="grade-buttons">
+                <button class="grade-btn grade-5-btn" data-grade="5">5</button>
+                <button class="grade-btn grade-4-btn" data-grade="4">4</button>
+                <button class="grade-btn grade-3-btn" data-grade="3">3</button>
+                <button class="grade-btn grade-2-btn" data-grade="2">2</button>
+            </div>
+            
+            <div class="attendance-buttons">
+                <button class="att-btn" data-attendance="Я">Я (был)</button>
+                <button class="att-btn" data-attendance="Н">Н (не был)</button>
+                <button class="att-btn" data-attendance="Б">Б (болел)</button>
+                <button class="att-btn" data-attendance="ДО">ДО</button>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="close-btn" id="clearBtn">Очистить</button>
+                <button class="close-btn" id="closeModalBtn">Закрыть</button>
             </div>
         </div>
     </div>
 
-    <!-- ── Picker Popup ── -->
-    <div class="picker-overlay" id="pickerOverlay" onclick="closePicker()"></div>
-    <div class="picker-popup" id="pickerPopup">
-        <div class="section-label">Оценки</div>
-        <div class="picker-options" id="gradeOptions">
-            <div class="picker-option grade-opt-5" data-val="5" onclick="pickValue('5','grade')">5</div>
-            <div class="picker-option grade-opt-4" data-val="4" onclick="pickValue('4','grade')">4</div>
-            <div class="picker-option grade-opt-3" data-val="3" onclick="pickValue('3','grade')">3</div>
-            <div class="picker-option grade-opt-2" data-val="2" onclick="pickValue('2','grade')">2</div>
-            <div class="picker-option grade-opt-1" data-val="1" onclick="pickValue('1','grade')">1</div>
-        </div>
-        <div class="divider"></div>
-        <div class="section-label">Посещаемость</div>
-        <div class="picker-options" id="attOptions">
-            <div class="picker-option att-opt-я" data-val="Я" onclick="pickValue('Я','att')">Я</div>
-            <div class="picker-option att-opt-н" data-val="Н" onclick="pickValue('Н','att')">Н</div>
-            <div class="picker-option att-opt-б" data-val="Б" onclick="pickValue('Б','att')">Б</div>
-            <div class="picker-option att-opt-до" data-val="ДО" onclick="pickValue('ДО','att')">ДО</div>
-        </div>
-        <div class="divider"></div>
-        <div class="picker-options">
-            <div class="picker-option clear-opt" data-val="" onclick="pickValue('','clear')">✕</div>
-        </div>
+    <div id="unsavedIndicator" class="unsaved-indicator" style="display: none;">
+        ⚠ Есть несохранённые изменения
     </div>
-
-    <!-- ── Group Modal ── -->
-    <div class="modal-overlay" id="groupModal">
-        <div class="modal">
-            <h3>Выбор группы</h3>
-            <select id="groupSelect">
-                <option disabled value="">Выберите группу</option>
-                <option value="5130902/40001">5130902/40001</option>
-                <option value="5130902/40002">5130902/40002</option>
-                <option value="5130902/40003">5130902/40003</option>
-            </select>
-            <div class="modal-actions">
-                <button class="btn btn-cancel" onclick="closeGroupModal()">Отмена</button>
-                <button class="btn btn-confirm" onclick="confirmGroup()">Применить</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── Toast ── -->
-    <div class="toast" id="toast">✓ Журнал сохранён</div>
 
     <script>
-        // ─── Data ─────────────────────────────────────────────
-        const students = [
-            { id: "1", name: "Григорьева А.П." },
-            { id: "2", name: "Крестовский А.В." },
-            { id: "3", name: "Любущак Е.В." },
-            { id: "4", name: "Марченко Н.С." },
-            { id: "5", name: "Панкратов С.А." },
-            { id: "6", name: "Савельев А.С." },
-            { id: "7", name: "Сахарова Е.Г." },
-            { id: "8", name: "Соколов Д.А." },
-            { id: "9", name: "Туги О.Р." },
-            { id: "10", name: "Хамщевиц Е.С." },
-            { id: "11", name: "Цветков Е.В." },
-        ];
+        let pendingChanges = [];
+        let saveTimeout = null;
+        let currentCell = null;
+        let currentStudentId = null;
+        let currentLessonId = null;
 
-        let journalData = {};
-        let selectedGroup = "5130902/40001";
-        let currentTargetCell = null;
-
-        // Функция для получения количества дней в месяце
-        function getDaysInMonth(year, month) {
-            return new Date(year, month, 0).getDate();
+        function openEditModal(cell) {
+            currentCell = cell;
+            currentStudentId = cell.dataset.student;
+            currentLessonId = cell.dataset.lesson;
+            
+            const studentName = cell.parentElement.querySelector('.student-cell').innerText;
+            const lessonHeader = cell.closest('table').querySelector(`th[title*="${currentLessonId}"]`);
+            const lessonText = lessonHeader ? lessonHeader.innerText.trim() : 'Урок';
+            
+            document.getElementById('modalStudentInfo').innerHTML = `<strong>Студент:</strong> ${studentName}`;
+            document.getElementById('modalLessonInfo').innerHTML = `<strong>Урок:</strong> ${lessonText}`;
+            
+            document.getElementById('editModal').style.display = 'block';
         }
 
-        function renderTable() {
-            const monthInput = document.getElementById('monthPicker').value;
-            if (!monthInput) return;
-            const [year, month] = monthInput.split('-').map(Number);
-            const daysInMonth = getDaysInMonth(year, month);
-
-            const thead = document.querySelector('#journalTable thead');
-            const tbody = document.querySelector('#journalTable tbody');
-
-            let h1 = '<tr>';
-            h1 += '<th class="num-header" rowspan="2">№</th>';
-            h1 += '<th class="student-header" rowspan="2">Ф.И.О. обучающихся</th>';
-            for (let d = 1; d <= daysInMonth; d++) h1 += `<th class="day-header">${d}</th>`;
-            h1 += '<th class="final-header" rowspan="2">Зачетные оценки</th>';
-            h1 += '</tr>';
-
-            let h2 = '<tr class="month-row">';
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dt = new Date(year, month - 1, d);
-                const wd = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'][dt.getDay()];
-                const isWeekend = (dt.getDay() === 0 || dt.getDay() === 6);
-                const style = isWeekend ? 'style="color:#c62828;"' : '';
-                h2 += `<th class="day-header" ${style}><div style="font-size:10px">${wd}</div></th>`;
+        function updateCellDisplay(cell, value, type) {
+            const displaySpan = cell.querySelector('.grade-display');
+            let displayText = '';
+            let className = 'grade-cell ';
+            
+            if (type === 'grade') {
+                displayText = value;
+                className += `grade-${value}`;
+                cell.dataset.grade = value;
+                delete cell.dataset.attendance;
+            } else if (type === 'attendance') {
+                displayText = value;
+                className += `attendance-${value}`;
+                cell.dataset.attendance = value;
+                delete cell.dataset.grade;
+            } else {
+                displayText = '—';
+                className += '';
+                delete cell.dataset.grade;
+                delete cell.dataset.attendance;
             }
-            h2 += '</tr>';
-            thead.innerHTML = h1 + h2;
+            
+            displaySpan.textContent = displayText;
+            cell.className = className;
+        }
 
-            let bodyHTML = '';
-            students.forEach((s, si) => {
-                bodyHTML += '<tr>';
-                bodyHTML += `<td class="num-cell">${s.id}</td>`;
-                bodyHTML += `<td class="student-cell">${s.name}</td>`;
-                for (let d = 1; d <= daysInMonth; d++) {
-                    const key = `${s.id}-${year}-${month}-${d}`;
-                    const cellData = journalData[key];
-                    const val = cellData ? cellData.value : '';
-                    const cls = getCellClass(val);
-                    bodyHTML += `<td class="grade-cell ${cls}" data-student="${si}" data-day="${d}" data-year="${year}" data-month="${month}" onclick="openPicker(event, ${si}, ${d}, ${year}, ${month})">${val}</td>`;
+        function addChange(studentId, lessonId, grade, attendance, isClear = false) {
+            const existingIndex = pendingChanges.findIndex(
+                c => c.student_id == studentId && c.lesson_id == lessonId
+            );
+            
+            const change = {
+                student_id: parseInt(studentId),
+                lesson_id: parseInt(lessonId)
+            };
+            
+            if (isClear) {
+                change.grade = null;
+                change.attendance = null;
+            } else {
+                if (grade) change.grade = parseInt(grade);
+                if (attendance) change.attendance = attendance;
+            }
+            
+            if (existingIndex >= 0) {
+                pendingChanges[existingIndex] = change;
+            } else {
+                pendingChanges.push(change);
+            }
+            
+            document.getElementById('unsavedIndicator').style.display = 'block';
+            
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => saveAllChanges(), 3000);
+        }
+
+        function saveAllChanges() {
+            if (pendingChanges.length === 0) return;
+            
+            document.getElementById('saveSpinner').classList.remove('hidden');
+            
+            fetch('/teacher/journal/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'HX-Request': 'true'
+                },
+                body: JSON.stringify({ changes: pendingChanges })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    pendingChanges = [];
+                    document.getElementById('unsavedIndicator').style.display = 'none';
+                    showToast('✓ Журнал сохранён');
+                } else {
+                    showToast('✗ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
                 }
-                const final = calcFinal(s.id, year, month, daysInMonth);
-                const fcls = getCellClass(final);
-                bodyHTML += `<td class="final-cell ${fcls}" id="final-${s.id}-${year}-${month}">${final}</td></tr>`;
+            })
+            .catch(error => {
+                showToast('✗ Ошибка сети: ' + error);
+            })
+            .finally(() => {
+                document.getElementById('saveSpinner').classList.add('hidden');
             });
-            tbody.innerHTML = bodyHTML;
         }
 
-        function getCellClass(val) {
-            if (!val) return '';
-            if (['5', '4', '3', '2', '1'].includes(val)) return `grade-${val}`;
-            const map = { 'Я': 'attendance-я', 'Н': 'attendance-н', 'Б': 'attendance-б', 'ДО': 'attendance-до' };
-            return map[val] || '';
-        }
-
-        function calcFinal(studentId, year, month, daysInMonth) {
-            let sum = 0, count = 0;
-            for (let d = 1; d <= daysInMonth; d++) {
-                const key = `${studentId}-${year}-${month}-${d}`;
-                const cell = journalData[key];
-                if (cell && ['5', '4', '3', '2', '1'].includes(cell.value)) {
-                    sum += parseInt(cell.value);
-                    count++;
-                }
+        function showToast(message) {
+            let toast = document.getElementById('customToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'customToast';
+                toast.className = 'toast';
+                document.body.appendChild(toast);
             }
-            if (count === 0) return '';
-            return (sum / count).toFixed(2);
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
         }
 
-        function recalcAllFinals() {
-            const monthInput = document.getElementById('monthPicker').value;
-            if (!monthInput) return;
-            const [year, month] = monthInput.split('-').map(Number);
-            const daysInMonth = getDaysInMonth(year, month);
-            students.forEach(s => {
-                const final = calcFinal(s.id, year, month, daysInMonth);
-                const el = document.getElementById(`final-${s.id}-${year}-${month}`);
-                if (el) { el.textContent = final; el.className = 'final-cell ' + getCellClass(final); }
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentCell = null;
+        }
+
+        // Обработчики событий
+        document.querySelectorAll('.grade-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (currentCell) {
+                    const grade = btn.dataset.grade;
+                    updateCellDisplay(currentCell, grade, 'grade');
+                    addChange(currentStudentId, currentLessonId, grade, null);
+                    closeModal();
+                }
             });
-        }
+        });
 
-        function openPicker(e, si, day, year, month) {
-            e.stopPropagation();
-            currentTargetCell = [si, day, year, month];
-            const popup = document.getElementById('pickerPopup');
-            const overlay = document.getElementById('pickerOverlay');
-            const rect = e.target.getBoundingClientRect();
-            popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
-            popup.style.top = (rect.bottom + 4) + 'px';
-            popup.classList.add('active');
-            overlay.classList.add('active');
-        }
-
-        function closePicker() {
-            document.getElementById('pickerPopup').classList.remove('active');
-            document.getElementById('pickerOverlay').classList.remove('active');
-            currentTargetCell = null;
-        }
-
-        function pickValue(val, type) {
-            if (!currentTargetCell) return;
-            const [si, day, year, month] = currentTargetCell;
-            const key = `${students[si].id}-${year}-${month}-${day}`;
-            if (type === 'clear') delete journalData[key];
-            else journalData[key] = { value: val, type };
-            document.querySelectorAll(`td[data-student="${si}"][data-day="${day}"][data-year="${year}"][data-month="${month}"]`).forEach(cell => {
-                cell.textContent = val;
-                cell.className = 'grade-cell ' + getCellClass(val);
+        document.querySelectorAll('.att-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (currentCell) {
+                    const attendance = btn.dataset.attendance;
+                    updateCellDisplay(currentCell, attendance, 'attendance');
+                    addChange(currentStudentId, currentLessonId, null, attendance);
+                    closeModal();
+                }
             });
-            recalcAllFinals();
-            closePicker();
-        }
+        });
 
-        function openGroupModal() {
-            document.getElementById('groupModal').classList.add('active');
-            document.getElementById('groupSelect').value = selectedGroup;
-        }
-        function closeGroupModal() { document.getElementById('groupModal').classList.remove('active'); }
-        function confirmGroup() {
-            const val = document.getElementById('groupSelect').value;
-            if (!val) return;
-            selectedGroup = val;
-            document.getElementById('groupLabel').textContent = `Группа: ${val}`;
-            closeGroupModal();
-        }
-
-        function saveJournal() {
-            const data = { group: selectedGroup, month: document.getElementById('monthPicker').value, entries: journalData };
-            localStorage.setItem('schoolJournal', JSON.stringify(data));
-            showToast('✓ Журнал сохранён');
-        }
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2500);
-        }
-
-        // Инициализация monthPicker через кастомный селектор
-        function initMonthSelector() {
-            const datePicker = document.querySelector('.datePicker');
-            if (!datePicker) return;
-            
-            const monthPicker = document.getElementById('monthPicker');
-            
-            function updateMonth() {
-                if (datePicker.value) {
-                    monthPicker.value = datePicker.value;
-                    renderTable();
-                }
+        document.getElementById('clearBtn')?.addEventListener('click', () => {
+            if (currentCell) {
+                updateCellDisplay(currentCell, '', 'clear');
+                addChange(currentStudentId, currentLessonId, null, null, true);
+                closeModal();
             }
-            
-            datePicker.addEventListener('change', updateMonth);
-            
-            // Установка текущего месяца
-            const now = new Date();
-            const yyyy = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const currentMonth = `${yyyy}-${mm}`;
-            datePicker.value = currentMonth;
-            monthPicker.value = currentMonth;
-            
-            renderTable();
+        });
+
+        document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
+        document.getElementById('saveAllBtn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            saveAllChanges();
+        });
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('editModal')) {
+                closeModal();
+            }
         }
 
-        (function loadSaved() {
-            const raw = localStorage.getItem('schoolJournal');
-            if (!raw) {
-                initMonthSelector();
-                return;
+        window.addEventListener('beforeunload', function() {
+            if (pendingChanges.length > 0) {
+                saveAllChanges();
             }
-            try {
-                const data = JSON.parse(raw);
-                if (data.group) { selectedGroup = data.group; document.getElementById('groupLabel').textContent = `Группа: ${data.group}`; }
-                if (data.month) {
-                    document.getElementById('monthPicker').value = data.month;
-                    const datePicker = document.querySelector('.datePicker');
-                    if (datePicker) datePicker.value = data.month;
-                }
-                if (data.entries) journalData = data.entries;
-            } catch (e) { }
-            initMonthSelector();
-        })();
+        });
     </script>
 </body>
-
-<style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: #f0f2f5;
-        color: #333;
-        min-height: 100vh;
-    }
-
-    /* ── Top Navigation Bar ── */
-    .top-nav {
-        background: #014770d0;
-        color: #fff;
-        padding: 16px 24px;
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        border-radius: 8px;
-    }
-    .back-btn {
-        background: rgba(255,255,255,0.1);
-        border: none;
-        color: #fff;
-        padding: 8px 16px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: background 0.2s;
-    }
-    .back-btn:hover { background: rgba(255,255,255,0.2); }
-    .top-nav h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.3px; }
-
-    .container { margin: 0 auto; padding: 20px; }
-
-    /* ── Top bar ── */
-    .top-bar {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-    }
-    .btn {
-        padding: 10px 24px;
-        border: none;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .btn-save { background: #014770d0; color: #fff; }
-    .btn-save:hover {
-        background: #014770d0;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(59,125,216,0.4);
-    }
-    .btn-group {
-        background: #fff;
-        color: #014770d0;
-        border: 2px solid #014770d0;
-    }
-    .btn-group:hover {
-        background: #ebf3fd;
-        transform: translateY(-1px);
-    }
-    .month-selector {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-left: auto;
-    }
-    .month-selector label { font-weight: 600; font-size: 15px; color: #555; }
-    .month-selector input[type="month"] {
-        padding: 8px 14px;
-        border: 2px solid #d0d7e0;
-        border-radius: 8px;
-        font-size: 15px;
-        color: #333;
-        background: #fff;
-        outline: none;
-        transition: border-color 0.2s;
-    }
-    .month-selector input[type="month"]:focus { border-color: #014770d0; }
-
-    /* ── Card ─ */
-    .card {
-        background: #fff;
-        border-radius: 16px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-        overflow: hidden;
-    }
-    .card-header {
-        background: #014770d0;
-        color: #fff;
-        padding: 16px 24px;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .card-header h2 { font-size: 18px; font-weight: 600; }
-    .card-header .group-name { font-size: 14px; opacity: 0.85; }
-
-    /* ── Table wrapper ── */
-    .table-wrapper {
-        overflow-x: auto;
-        overflow-y: auto;
-        max-height: 80vh;
-    }
-
-    /* ── Table ── */
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-        min-width: 800px;
-    }
-    thead th {
-        background: #eaf1fb;
-        padding: 8px 4px;
-        text-align: center;
-        font-weight: 600;
-        color: #333;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        white-space: nowrap;
-    }
-    thead th.day-header { min-width: 32px; width: 32px; }
-    thead th.final-header { min-width: 100px; }
-    thead th.student-header {
-        min-width: 200px;
-        text-align: left;
-        padding-left: 16px;
-        position: sticky;
-        left: 0;
-        z-index: 11;
-    }
-    thead th.num-header {
-        min-width: 80px;
-        width: 80px;
-        position: sticky;
-        left: 0;
-        z-index: 11;
-    }
-    .month-row th { font-size: 12px; padding: 4px; }
-
-    tbody td {
-        border: 1px solid #e2e8f0;
-        text-align: center;
-        padding: 0;
-        height: 36px;
-        position: relative;
-    }
-    tbody td.student-cell {
-        text-align: left;
-        padding-left: 16px;
-        font-weight: 500;
-        white-space: nowrap;
-        position: sticky;
-        left: 0;
-        background: #fff;
-        z-index: 5;
-    }
-    tbody td.num-cell {
-        font-weight: 600;
-        color: #888;
-        position: sticky;
-        left: 0;
-        background: #fff;
-        z-index: 5;
-        min-width: 80px;
-        width: 80px;
-        text-align: center;
-    }
-    tbody td.grade-cell {
-        cursor: pointer;
-        transition: background 0.15s;
-        font-weight: 700;
-        font-size: 14px;
-        user-select: none;
-    }
-    tbody td.grade-cell:hover { background: #e8f0fe; }
-    tbody td.final-cell {
-        background: #f8fafb;
-        font-weight: 700;
-        font-size: 15px;
-        min-width: 100px;
-    }
-
-    /* Grade colours */
-    .grade-5 { color: #2e7d32; background: #e8f5e9 !important; }
-    .grade-4 { color: #1565c0; background: #e3f2fd !important; }
-    .grade-3 { color: #e65100; background: #fff3e0 !important; }
-    .grade-2 { color: #c62828; background: #ffebee !important; }
-    .grade-1 { color: #b71c1c; background: #ffebee !important; }
-
-    /* Attendance colours */
-    .attendance-я { color: #2e7d32; background: #e8f5e9 !important; }
-    .attendance-н { color: #c62828; background: #ffebee !important; }
-    .attendance-б { color: #f57f17; background: #fff8e1 !important; }
-    .attendance-до { color: #6a1b9a; background: #f3e5f5 !important; }
-
-    /* Row hover & stripes */
-    tbody tr:hover td { background: #f5f8ff; }
-    tbody tr:hover td.student-cell,
-    tbody tr:hover td.num-cell { background: #f5f8ff; }
-    tbody tr:nth-child(even) td { background: #fafbfd; }
-    tbody tr:nth-child(even) td.student-cell,
-    tbody tr:nth-child(even) td.num-cell { background: #fafbfd; }
-
-    /* ── Popup picker ── */
-    .picker-overlay {
-        display: none;
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        z-index: 100;
-    }
-    .picker-overlay.active { display: block; }
-    .picker-popup {
-        display: none;
-        position: fixed;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-        padding: 8px;
-        z-index: 200;
-        min-width: 180px;
-    }
-    .picker-popup.active { display: block; }
-    .picker-popup .section-label {
-        font-size: 11px;
-        text-transform: uppercase;
-        color: #999;
-        padding: 6px 10px 2px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-    }
-    .picker-popup .picker-options {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        padding: 4px;
-    }
-    .picker-popup .picker-option {
-        width: 38px;
-        height: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 700;
-        font-size: 15px;
-        transition: all 0.15s;
-        border: 2px solid transparent;
-    }
-    .picker-option:hover {
-        transform: scale(1.1);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    .picker-option.grade-opt-5 { background: #e8f5e9; color: #2e7d32; }
-    .picker-option.grade-opt-4 { background: #e3f2fd; color: #1565c0; }
-    .picker-option.grade-opt-3 { background: #fff3e0; color: #e65100; }
-    .picker-option.grade-opt-2 { background: #ffebee; color: #c62828; }
-    .picker-option.grade-opt-1 { background: #ffebee; color: #b71c1c; }
-    .picker-option.att-opt-я { background: #e8f5e9; color: #2e7d32; }
-    .picker-option.att-opt-н { background: #ffebee; color: #c62828; }
-    .picker-option.att-opt-б { background: #fff8e1; color: #f57f17; }
-    .picker-option.att-opt-до { background: #f3e5f5; color: #6a1b9a; }
-    .picker-option.clear-opt { background: #f5f5f5; color: #999; font-size: 18px; }
-    .divider { height: 1px; background: #e8ecf0; margin: 4px 8px; }
-
-    /* ── Toast ─ */
-    .toast {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        background: #2e7d32;
-        color: #fff;
-        padding: 14px 28px;
-        border-radius: 10px;
-        font-weight: 600;
-        font-size: 15px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-        transform: translateY(100px);
-        opacity: 0;
-        transition: all 0.35s;
-        z-index: 300;
-    }
-    .toast.show { transform: translateY(0); opacity: 1; }
-
-    /* ── Group modal ── */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.4);
-        z-index: 500;
-        justify-content: center;
-        align-items: center;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal {
-        background: #fff;
-        border-radius: 16px;
-        padding: 32px;
-        width: 420px;
-        max-width: 90vw;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-    }
-    .modal h3 { font-size: 20px; margin-bottom: 20px; color: #333; }
-    .modal select {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #d0d7e0;
-        border-radius: 10px;
-        font-size: 15px;
-        color: #333;
-        background: #fff;
-        outline: none;
-        margin-bottom: 20px;
-        transition: border-color 0.2s;
-    }
-    .modal select:focus { border-color: #014770d0; }
-    .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
-    .modal-actions .btn { padding: 10px 28px; }
-    .btn-cancel { background: #f0f0f0; color: #666; }
-    .btn-cancel:hover { background: #e0e0e0; }
-    .btn-confirm { background: #014770d0; color: #fff; }
-    .btn-confirm:hover { background: #014770d0; }
-</style>
-
+</html>
 {{end}}
