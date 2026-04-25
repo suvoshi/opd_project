@@ -39,6 +39,10 @@ func InitTemplates() {
 			return a * b
 		},
 
+		"div": func(a, b int) float64 {
+			return float64(a) / float64(b)
+		},
+
 		// Функции для форматирования
 		"formatDate": func(t time.Time) string {
 			return t.Format("02.01.2006")
@@ -103,14 +107,6 @@ func InitTemplates() {
 				return actions[i][j]
 			}
 			return models.Action{}
-		},
-
-		// Функция для безопасного доступа к слайсу
-		"index": func(slice []models.Lesson, idx int) models.Lesson {
-			if idx >= 0 && idx < len(slice) {
-				return slice[idx]
-			}
-			return models.Lesson{}
 		},
 	}
 

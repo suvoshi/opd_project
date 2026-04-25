@@ -354,7 +354,7 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 		for j, lesson := range data.Lessons {
 			result = config.DB.
 				Where("id_student = ? AND id_lesson = ?", student.ID, lesson.ID).
-				Find(&row[j]) // нужно ли тут "&" ?
+				Find(&row[j])
 			if result.Error != nil {
 				templates.ExecuteTemplate(w, "error", errorServerSide)
 				return

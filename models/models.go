@@ -21,10 +21,11 @@ const (
 	Practice DisciplineTypePerform = 1
 
 	// Посещаемость, явка, неявка, отсутствие по болезни и ДО соотсветственно
-	Present AttendanceType = 0
-	Absent  AttendanceType = 1
-	Sick    AttendanceType = 2
-	DO      AttendanceType = 3
+	NoAttendance                = 0
+	Present      AttendanceType = 1
+	Absent       AttendanceType = 2
+	Sick         AttendanceType = 3
+	DO           AttendanceType = 4
 )
 
 type User struct {

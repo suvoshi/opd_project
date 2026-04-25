@@ -1,338 +1,48 @@
 {{define "teacher_disciplines_part_table"}}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
-        .journal-container { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); overflow-x: auto; max-height: 70vh; }
-        .journal-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
-        .journal-table th { background: #014770d0; color: white; padding: 12px 8px; text-align: center; position: sticky; top: 0; z-index: 10; }
-        .journal-table th.student-col { position: sticky; left: 0; z-index: 11; background: #014770d0; min-width: 200px; text-align: left; padding-left: 16px; }
-        .journal-table th.number-col { position: sticky; left: 0; z-index: 11; background: #014770d0; width: 50px; }
-        .journal-table td { border: 1px solid #e2e8f0; text-align: center; padding: 8px 4px; height: 45px; }
-        .journal-table td.student-cell { text-align: left; padding-left: 16px; font-weight: 500; position: sticky; left: 0; background: white; z-index: 5; }
-        .journal-table td.number-cell { position: sticky; left: 0; background: white; z-index: 5; font-weight: 600; color: #666; }
-        .grade-cell { cursor: pointer; transition: background 0.2s; font-weight: 600; }
-        .grade-cell:hover { background: #e8f0fe !important; }
-        .grade-5 { background: #e8f5e9; color: #2e7d32; }
-        .grade-4 { background: #e3f2fd; color: #1565c0; }
-        .grade-3 { background: #fff3e0; color: #e65100; }
-        .grade-2 { background: #ffebee; color: #c62828; }
-        .attendance-Я { background: #e8f5e9; color: #2e7d32; }
-        .attendance-Н { background: #ffebee; color: #c62828; }
-        .attendance-Б { background: #fff8e1; color: #f57f17; }
-        .attendance-ДО { background: #f3e5f5; color: #6a1b9a; }
-        .toolbar { display: flex; gap: 15px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
-        .btn { padding: 10px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-primary { background: #014770d0; color: white; }
-        .btn-primary:hover { background: #014770; transform: translateY(-1px); }
-        .info-bar { background: #e9ecef; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #014770; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
-        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border-radius: 12px; width: 300px; text-align: center; }
-        .grade-buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; }
-        .grade-btn { width: 50px; height: 50px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
-        .grade-btn:hover { transform: scale(1.1); }
-        .grade-5-btn { background: #e8f5e9; color: #2e7d32; }
-        .grade-4-btn { background: #e3f2fd; color: #1565c0; }
-        .grade-3-btn { background: #fff3e0; color: #e65100; }
-        .grade-2-btn { background: #ffebee; color: #c62828; }
-        .attendance-buttons { display: flex; gap: 10px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
-        .att-btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .close-btn { background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; margin: 5px; }
-        .toast { position: fixed; bottom: 30px; right: 30px; background: #2e7d32; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; z-index: 1000; animation: fadeOut 2s forwards; }
-        @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
-        .unsaved-indicator { position: fixed; bottom: 20px; left: 20px; background: #ff9800; color: white; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 1000; }
-        .hidden { display: none; }
-    </style>
-</head>
-<body>
-    <div class="container" style="padding: 20px;">
-        <div class="info-bar">
-            <div>
-                <strong>Группа:</strong> <span id="group-name">{{.GroupName}}</span>
-                <strong style="margin-left: 20px;">Дисциплина:</strong> <span id="discipline-name">{{.DisciplineName}}</span>
-            </div>
-            <div>
-                <strong>Уроков:</strong> {{len .Lessons}}
-                <strong style="margin-left: 20px;">Студентов:</strong> {{len .Students}}
-            </div>
-        </div>
 
-        <div class="toolbar">
-            <button class="btn btn-primary" id="saveAllBtn">
-                💾 Сохранить все изменения
-            </button>
-            <button class="btn btn-primary" onclick="location.reload()">
-                🔄 Обновить
-            </button>
-            <div id="saveSpinner" class="hidden">
-                <div class="spinner"></div> Сохранение...
-            </div>
-        </div>
+<table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+        <tr>
+            <th>ФИО студента</th>
+            {{range .Lessons}}
+            <th>{{.DateBegin.Format "15:04 02.01"}}</th>
+            {{end}}
+            <th>Итоговая оценка</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range $i, $student := .Students}}
+        <tr>
+            <td>{{$student.LastName}} {{$student.FirstName}} {{$student.Patronymic}}</td>
+            {{$s := 0}}
+            {{$c := 0}}
 
-        <div class="journal-container">
-            <table class="journal-table" id="journalTable">
-                <thead>
-                    <tr>
-                        <th class="number-col">№</th>
-                        <th class="student-col">Ф.И.О. студента</th>
-                        {{range $idx, $lesson := .Lessons}}
-                        <th title="{{$lesson.DateBegin.Format "02.01.2006"}}">
-                            Урок {{add $idx 1}}<br>
-                            <small>{{$lesson.DateBegin.Format "02.01"}}</small>
-                        </th>
-                        {{end}}
-                    </tr>
-                </thead>
-                <tbody>
-                    {{range $si, $student := .Students}}
-                    <tr data-student-id="{{$student.ID}}">
-                        <td class="number-cell">{{add $si 1}}</td>
-                        <td class="student-cell">{{$student.LastName}} {{$student.FirstName}}</td>
-                        {{range $li, $lesson := $.Lessons}}
-                        {{$action := index $.Actions $si $li}}
-                        <td class="grade-cell 
-                            {{if $action.Grade}}grade-{{$action.Grade}}{{end}}
-                            {{if and (not $action.Grade) $action.Attendance}}attendance-{{$action.Attendance | getAttendanceDisplay}}{{end}}"
-                            data-student="{{$student.ID}}"
-                            data-lesson="{{$lesson.ID}}"
-                            data-grade="{{$action.Grade}}"
-                            data-attendance="{{$action.Attendance}}"
-                            onclick="openEditModal(this)">
-                            <span class="grade-display">
-                                {{if $action.Grade}}
-                                    {{$action.Grade}}
-                                {{else if $action.Attendance}}
-                                    {{$action.Attendance | getAttendanceDisplay}}
-                                {{else}}
-                                    —
-                                {{end}}
-                            </span>
-                        </td>
-                        {{end}}
-                    </tr>
+            {{range $j, $lesson := $.Lessons}}
+            <td>
+                {{$action := index $.Actions $i $j}}
+
+                {{if (eq $action.Grade 0)}}
+                    {{if (eq $action.Attendance 0)}}
+                    -
+                    {{else}}
+                    {{getAttendanceValue $action}}
                     {{end}}
-                </tbody>
-            </table>
-        </div>
-    </div>
+                {{else}}
+                {{$action.Grade}}
+                {{$s = add $s $action.Grade}}
+                {{$c = add $c 1}}
+                {{end}}
+            </td>
+            {{end}}
+            <td>
+                {{if (eq $c 0)}}
+                -
+                {{else}}
+                {{div $s $c}}
+                {{end}}
+            </td>
+        </tr>
+        {{end}}
+    </tbody>
 
-    <!-- Модальное окно -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <h3>Редактирование</h3>
-            <div id="modalStudentInfo" style="margin: 10px 0; color: #666;"></div>
-            <div id="modalLessonInfo" style="margin: 10px 0; color: #666;"></div>
-            
-            <div class="grade-buttons">
-                <button class="grade-btn grade-5-btn" data-grade="5">5</button>
-                <button class="grade-btn grade-4-btn" data-grade="4">4</button>
-                <button class="grade-btn grade-3-btn" data-grade="3">3</button>
-                <button class="grade-btn grade-2-btn" data-grade="2">2</button>
-            </div>
-            
-            <div class="attendance-buttons">
-                <button class="att-btn" data-attendance="Я">Я (был)</button>
-                <button class="att-btn" data-attendance="Н">Н (не был)</button>
-                <button class="att-btn" data-attendance="Б">Б (болел)</button>
-                <button class="att-btn" data-attendance="ДО">ДО</button>
-            </div>
-            
-            <div style="margin-top: 20px;">
-                <button class="close-btn" id="clearBtn">Очистить</button>
-                <button class="close-btn" id="closeModalBtn">Закрыть</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="unsavedIndicator" class="unsaved-indicator" style="display: none;">
-        ⚠ Есть несохранённые изменения
-    </div>
-
-    <script>
-        let pendingChanges = [];
-        let saveTimeout = null;
-        let currentCell = null;
-        let currentStudentId = null;
-        let currentLessonId = null;
-
-        function openEditModal(cell) {
-            currentCell = cell;
-            currentStudentId = cell.dataset.student;
-            currentLessonId = cell.dataset.lesson;
-            
-            const studentName = cell.parentElement.querySelector('.student-cell').innerText;
-            const lessonHeader = cell.closest('table').querySelector(`th[title*="${currentLessonId}"]`);
-            const lessonText = lessonHeader ? lessonHeader.innerText.trim() : 'Урок';
-            
-            document.getElementById('modalStudentInfo').innerHTML = `<strong>Студент:</strong> ${studentName}`;
-            document.getElementById('modalLessonInfo').innerHTML = `<strong>Урок:</strong> ${lessonText}`;
-            
-            document.getElementById('editModal').style.display = 'block';
-        }
-
-        function updateCellDisplay(cell, value, type) {
-            const displaySpan = cell.querySelector('.grade-display');
-            let displayText = '';
-            let className = 'grade-cell ';
-            
-            if (type === 'grade') {
-                displayText = value;
-                className += `grade-${value}`;
-                cell.dataset.grade = value;
-                delete cell.dataset.attendance;
-            } else if (type === 'attendance') {
-                displayText = value;
-                className += `attendance-${value}`;
-                cell.dataset.attendance = value;
-                delete cell.dataset.grade;
-            } else {
-                displayText = '—';
-                className += '';
-                delete cell.dataset.grade;
-                delete cell.dataset.attendance;
-            }
-            
-            displaySpan.textContent = displayText;
-            cell.className = className;
-        }
-
-        function addChange(studentId, lessonId, grade, attendance, isClear = false) {
-            const existingIndex = pendingChanges.findIndex(
-                c => c.student_id == studentId && c.lesson_id == lessonId
-            );
-            
-            const change = {
-                student_id: parseInt(studentId),
-                lesson_id: parseInt(lessonId)
-            };
-            
-            if (isClear) {
-                change.grade = null;
-                change.attendance = null;
-            } else {
-                if (grade) change.grade = parseInt(grade);
-                if (attendance) change.attendance = attendance;
-            }
-            
-            if (existingIndex >= 0) {
-                pendingChanges[existingIndex] = change;
-            } else {
-                pendingChanges.push(change);
-            }
-            
-            document.getElementById('unsavedIndicator').style.display = 'block';
-            
-            if (saveTimeout) clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => saveAllChanges(), 3000);
-        }
-
-        function saveAllChanges() {
-            if (pendingChanges.length === 0) return;
-            
-            document.getElementById('saveSpinner').classList.remove('hidden');
-            
-            fetch('/teacher/journal/save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'HX-Request': 'true'
-                },
-                body: JSON.stringify({ changes: pendingChanges })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    pendingChanges = [];
-                    document.getElementById('unsavedIndicator').style.display = 'none';
-                    showToast('✓ Журнал сохранён');
-                } else {
-                    showToast('✗ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
-                }
-            })
-            .catch(error => {
-                showToast('✗ Ошибка сети: ' + error);
-            })
-            .finally(() => {
-                document.getElementById('saveSpinner').classList.add('hidden');
-            });
-        }
-
-        function showToast(message) {
-            let toast = document.getElementById('customToast');
-            if (!toast) {
-                toast = document.createElement('div');
-                toast.id = 'customToast';
-                toast.className = 'toast';
-                document.body.appendChild(toast);
-            }
-            toast.textContent = message;
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 2000);
-        }
-
-        function closeModal() {
-            document.getElementById('editModal').style.display = 'none';
-            currentCell = null;
-        }
-
-        // Обработчики событий
-        document.querySelectorAll('.grade-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (currentCell) {
-                    const grade = btn.dataset.grade;
-                    updateCellDisplay(currentCell, grade, 'grade');
-                    addChange(currentStudentId, currentLessonId, grade, null);
-                    closeModal();
-                }
-            });
-        });
-
-        document.querySelectorAll('.att-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (currentCell) {
-                    const attendance = btn.dataset.attendance;
-                    updateCellDisplay(currentCell, attendance, 'attendance');
-                    addChange(currentStudentId, currentLessonId, null, attendance);
-                    closeModal();
-                }
-            });
-        });
-
-        document.getElementById('clearBtn')?.addEventListener('click', () => {
-            if (currentCell) {
-                updateCellDisplay(currentCell, '', 'clear');
-                addChange(currentStudentId, currentLessonId, null, null, true);
-                closeModal();
-            }
-        });
-
-        document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
-        document.getElementById('saveAllBtn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            saveAllChanges();
-        });
-
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('editModal')) {
-                closeModal();
-            }
-        }
-
-        window.addEventListener('beforeunload', function() {
-            if (pendingChanges.length > 0) {
-                saveAllChanges();
-            }
-        });
-    </script>
-</body>
-</html>
 {{end}}
