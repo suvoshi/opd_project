@@ -1,48 +1,341 @@
 {{define "teacher_disciplines_part_table"}}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Журнал - {{.Discipline.Name}}</title>
 
+<style>
+body{font-family:Arial;background:#eef2f6;padding:20px}
+
+.top-nav{
+ background:#014770;color:#fff;padding:14px;
+ border-radius:10px;margin-bottom:15px;
+ display:flex;gap:10px;align-items:center
+}
+
+.back-btn{
+ background:rgba(255,255,255,.2);
+ border:none;color:#fff;
+ padding:8px 14px;border-radius:6px;cursor:pointer
+}
+
+.btn-save{
+ background:#014770;color:#fff;
+ padding:10px 20px;border:none;
+ border-radius:8px;cursor:pointer;margin-bottom:15px
+}
+
+.table-wrapper{overflow:auto;max-height:70vh}
+
+table{border-collapse:collapse;width:100%;background:#fff}
+
+th,td{
+ border:1px solid #ddd;
+ padding:6px;
+ text-align:center;
+ font-size:13px
+}
+
+th{position:sticky;top:0;background:#eaf1fb;z-index:2}
+
+.student-cell{
+ position:sticky;left:0;background:#fff;
+ text-align:left;min-width:220px
+}
+
+.lesson-box{
+ display:flex;
+ flex-direction:column;
+ gap:4px;
+ align-items:center;
+}
+
+.lesson-input{
+ width:90px;
+ font-size:12px;
+ text-align:center;
+}
+
+.grade-cell{
+ cursor:pointer;
+}
+
+.grade-cell:hover{
+ background-color:#f0f0f0;
+}
+
+.final-cell{font-weight:bold;background:#f7f9fb}
+
+.grade-5{background:#e8f5e9}
+.grade-4{background:#e3f2fd}
+.grade-3{background:#fff3e0}
+.grade-2{background:#ffebee}
+
+.att-Я{background:#e8f5e9}
+.att-Н{background:#ffebee}
+.att-Б{background:#fff8e1}
+.att-ДО{background:#f3e5f5}
+
+.modal{
+ display:none;
+ position:fixed;inset:0;
+ background:rgba(0,0,0,.5);
+ z-index:1000;
+}
+
+.modal-content{
+ background:#fff;
+ width:320px;
+ margin:10% auto;
+ padding:20px;
+ border-radius:12px;
+ text-align:center
+}
+
+.btn{padding:8px 12px;margin:5px;border:none;border-radius:6px;cursor:pointer}
+.btn:hover{opacity:0.8}
+
+</style>
+</head>
+
+<body>
+
+<div class="top-nav">
+<button class="back-btn"
+hx-post="/teacher/disciplines_part_group/"
+hx-target="#disciplines-container-group"
+hx-vals='js:{"id_group":"{{.Group.ID}}","id_discipline":"{{.Discipline.ID}}"}'>
+
+← Назад
+</button>
+<h2>Журнал {{.Discipline.Name}}</h2>
+</div>
+
+<button id="saveBtn" class="btn-save">💾 Сохранить</button>
+
+<div class="table-wrapper">
 <table border="1" cellpadding="8" cellspacing="0">
-    <thead>
-        <tr>
-            <th>ФИО студента</th>
-            {{range .Lessons}}
-            <th>{{.DateBegin.Format "15:04 02.01"}}</th>
-            {{end}}
-            <th>Итоговая оценка</th>
-        </tr>
-    </thead>
-    <tbody>
-        {{range $i, $student := .Students}}
-        <tr>
-            <td>{{$student.LastName}} {{$student.FirstName}} {{$student.Patronymic}}</td>
-            {{$s := 0}}
-            {{$c := 0}}
+<thead>
+<tr>
+<th>№</th>
+<th>Студент</th>
+{{range .Lessons}}
+<th>
+<div class="lesson-box">
+<input class="lesson-input" data-lesson="{{.ID}}" value="{{.Description}}">
+<small>{{.DateBegin.Format "15:04"}}</small>
+<small>{{.DateBegin.Format "02.01"}}</small>
+</div>
+</th>
+{{end}}
+<th>Средний</th>
+</tr>
+</thead>
 
-            {{range $j, $lesson := $.Lessons}}
-            <td>
-                {{$action := index $.Actions $i $j}}
+<tbody>
+{{range $i, $student := .Students}}
+{{$row := index $.Actions $i}}
+<tr data-student-id="{{$student.ID}}" data-row-index="{{$i}}">
+<td>{{add $i 1}}</td>
+<td class="student-cell">{{$student.LastName}} {{$student.FirstName}} {{$student.Patronymic}}</td>
 
-                {{if (eq $action.Grade 0)}}
-                    {{if (eq $action.Attendance 0)}}
-                    -
-                    {{else}}
-                    {{getAttendanceValue $action}}
-                    {{end}}
-                {{else}}
-                {{$action.Grade}}
-                {{$s = add $s $action.Grade}}
-                {{$c = add $c 1}}
-                {{end}}
-            </td>
-            {{end}}
-            <td>
-                {{if (eq $c 0)}}
-                -
-                {{else}}
-                {{div $s $c}}
-                {{end}}
-            </td>
-        </tr>
-        {{end}}
-    </tbody>
+{{range $j, $lesson := $.Lessons}}
+{{$action := index $row $j}}
+<td class="grade-cell 
+    {{if ne $action.Grade 0}}grade-{{$action.Grade}}{{end}}
+    {{if and (eq $action.Grade 0) (eq $action.Attendance 1)}}att-Я{{end}}
+    {{if and (eq $action.Grade 0) (eq $action.Attendance 2)}}att-Н{{end}}
+    {{if and (eq $action.Grade 0) (eq $action.Attendance 3)}}att-Б{{end}}
+    {{if and (eq $action.Grade 0) (eq $action.Attendance 4)}}att-ДО{{end}}"
+    data-student-id="{{$student.ID}}"
+    data-lesson-id="{{$lesson.ID}}"
+    data-grade="{{$action.Grade}}"
+    data-attendance="{{$action.Attendance}}"
+    onclick="window.currentCell=this; document.getElementById('modal').style.display='block'">
+    
+    {{if ne $action.Grade 0}}
+        {{$action.Grade}}
+    {{else if eq $action.Attendance 1}}Я
+    {{else if eq $action.Attendance 2}}Н
+    {{else if eq $action.Attendance 3}}Б
+    {{else if eq $action.Attendance 4}}ДО
+    {{else}}—
+    {{end}}
+</td>
+{{end}}
 
+<td class="final-cell" data-final="0">—</td>
+</tr>
+{{end}}
+</tbody>
+</table>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+<div class="modal-content">
+<h3>Оценка</h3>
+<button class="btn" onclick="setGrade(5)">5</button>
+<button class="btn" onclick="setGrade(4)">4</button>
+<button class="btn" onclick="setGrade(3)">3</button>
+<button class="btn" onclick="setGrade(2)">2</button>
+<h3>Посещаемость</h3>
+<button class="btn" onclick="setAttendance(1)">Я</button>
+<button class="btn" onclick="setAttendance(2)">Н</button>
+<button class="btn" onclick="setAttendance(3)">Б</button>
+<button class="btn" onclick="setAttendance(4)">ДО</button>
+<button class="btn" onclick="clearCell()">Очистить</button>
+<button class="btn" onclick="closeModal()">Закрыть</button>
+</div>
+</div>
+
+<script>
+window.currentCell = null;
+
+function setGrade(value) {
+    let cell = window.currentCell;
+    if (!cell) return;
+    
+    cell.setAttribute('data-grade', value);
+    cell.setAttribute('data-attendance', '0');
+    cell.textContent = value;
+    
+    cell.classList.remove('grade-5', 'grade-4', 'grade-3', 'grade-2', 'att-Я', 'att-Н', 'att-Б', 'att-ДО');
+    cell.classList.add('grade-' + value);
+    
+    recalcAverage();
+    closeModal();
+}
+
+function setAttendance(value) {
+    let cell = window.currentCell;
+    if (!cell) return;
+    
+    let map = {1: 'Я', 2: 'Н', 3: 'Б', 4: 'ДО'};
+    
+    cell.setAttribute('data-attendance', value);
+    cell.setAttribute('data-grade', '0');
+    cell.textContent = map[value];
+    
+    cell.classList.remove('grade-5', 'grade-4', 'grade-3', 'grade-2', 'att-Я', 'att-Н', 'att-Б', 'att-ДО');
+    cell.classList.add('att-' + map[value]);
+    
+    recalcAverage();
+    closeModal();
+}
+
+function clearCell() {
+    let cell = window.currentCell;
+    if (!cell) return;
+    
+    cell.setAttribute('data-grade', '0');
+    cell.setAttribute('data-attendance', '0');
+    cell.textContent = '—';
+    
+    cell.classList.remove('grade-5', 'grade-4', 'grade-3', 'grade-2', 'att-Я', 'att-Н', 'att-Б', 'att-ДО');
+    
+    recalcAverage();
+    closeModal();
+}
+
+function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+    window.currentCell = null;
+}
+
+function recalcAverage() {
+    let rows = document.querySelectorAll('tbody tr');
+    for (let i = 0; i < rows.length; i++) {
+        let row = rows[i];
+        let cells = row.querySelectorAll('.grade-cell');
+        let sum = 0;
+        let count = 0;
+        
+        for (let j = 0; j < cells.length; j++) {
+            let grade = parseInt(cells[j].getAttribute('data-grade'));
+            if (grade > 0 && grade <= 5) {
+                sum += grade;
+                count++;
+            }
+        }
+        
+        let finalCell = row.querySelector('.final-cell');
+        if (count > 0) {
+            let avg = (sum / count).toFixed(2);
+            finalCell.textContent = avg;
+        } else {
+            finalCell.textContent = '—';
+        }
+    }
+}
+
+function buildPayload() {
+    let changes = [];
+    let cells = document.querySelectorAll('.grade-cell');
+    
+    for (let i = 0; i < cells.length; i++) {
+        let cell = cells[i];
+        changes.push({
+            student_id: parseInt(cell.getAttribute('data-student-id')),
+            lesson_id: parseInt(cell.getAttribute('data-lesson-id')),
+            grade: parseInt(cell.getAttribute('data-grade')),
+            attendance: parseInt(cell.getAttribute('data-attendance'))
+        });
+    }
+    
+    let lessonChanges = [];
+    let inputs = document.querySelectorAll('.lesson-input');
+    for (let i = 0; i < inputs.length; i++) {
+        lessonChanges.push({
+            lesson_id: parseInt(inputs[i].getAttribute('data-lesson')),
+            description: inputs[i].value
+        });
+    }
+    
+    return {
+        id_group: {{.Group.ID}},
+        id_discipline: {{.Discipline.ID}},
+        actionChanges: changes,
+        lessonChanges: lessonChanges
+    };
+}
+
+async function saveData() {
+    let btn = document.getElementById('saveBtn');
+    let oldText = btn.textContent;
+    btn.textContent = 'Сохранение...';
+    btn.disabled = true;
+    
+    try {
+        let response = await fetch('/update_journal/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(buildPayload())
+        });
+        
+        let result = await response.json();
+        
+        if (result.success) {
+            alert('Сохранено!');
+        } else {
+            alert('Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+        }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    } finally {
+        btn.textContent = oldText;
+        btn.disabled = false;
+    }
+}
+
+setTimeout(function() {
+    recalcAverage();
+}, 100);
+
+document.getElementById('saveBtn').onclick = saveData;
+</script>
+
+</body>
+</html>
 {{end}}

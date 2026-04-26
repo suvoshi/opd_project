@@ -106,7 +106,7 @@ type Action struct {
 	ID         int `gorm:"primaryKey"`
 	LessonID   int `gorm:"column:id_lesson;not null"`
 	StudentID  int `gorm:"column:id_student;not null"`
-	Grade      int `gorm:"check:grade BETWEEN 1 AND 5"`
+	Grade      int //`gorm:"check:grade BETWEEN 1 AND 5"`
 	Attendance AttendanceType
 	// тот, кто поставил grade или attendance (не только учитель)
 	UserID    int `gorm:"column:id_user"`

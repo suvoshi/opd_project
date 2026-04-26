@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"opd_project/config"
@@ -38,11 +39,11 @@ type TeacherDisciplinesPartGroupData struct {
 }
 
 type TeacherDisciplinesPartTableData struct {
-	GroupName      string
-	DisciplineName string
-	Students       []models.Student
-	Lessons        []models.Lesson
-	Actions        [][]models.Action
+	Group      models.Group
+	Discipline models.Discipline
+	Students   []models.Student
+	Lessons    []models.Lesson
+	Actions    [][]models.Action
 }
 
 // Дашборд
@@ -317,21 +318,16 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 
 	data := TeacherDisciplinesPartTableData{}
 
-	var disc models.Discipline
-	result = config.DB.Where("id = ?", id_discipline).First(&disc)
+	result = config.DB.Where("id = ?", id_discipline).First(&data.Discipline)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 		return
 	}
-	var group models.Group
-	result = config.DB.Where("id = ?", id_group).First(&group)
+	result = config.DB.Where("id = ?", id_group).First(&data.Group)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 		return
 	}
-
-	data.DisciplineName = disc.Name
-	data.GroupName = group.GroupSign
 
 	result = config.DB.
 		Where("id_group = ?", id_group).
@@ -368,77 +364,100 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // Cохранение журнала
-func TeacherJournalSaveHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("HX-Request") != "true" {
-		http.Error(w, "This endpoint requires HTMX request", http.StatusForbidden)
-		return
-	}
+type UpdateJournalRequest struct {
+	GroupID       int `json:"id_group"`
+	DisciplineID  int `json:"id_discipline"`
+	ActionChanges []struct {
+		StudentID  int `json:"student_id"`
+		LessonID   int `json:"lesson_id"`
+		Grade      int `json:"grade"`
+		Attendance int `json:"attendance"`
+	} `json:"actionChanges"`
+	LessonChanges []struct {
+		LessonID    int    `json:"lesson_id"`
+		Description string `json:"description"`
+	} `json:"lessonChanges"`
+}
 
-	var request struct {
-		GroupID      int `json:"group_id"`
-		DisciplineID int `json:"discipline_id"`
-		Changes      []struct {
-			StudentID  int     `json:"student_id"`
-			LessonID   int     `json:"lesson_id"`
-			Grade      *int    `json:"grade"`
-			Attendance *string `json:"attendance"`
-		} `json:"changes"`
-	}
+func UpdateJournalHandler(w http.ResponseWriter, r *http.Request) {
 
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	var req UpdateJournalRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		fmt.Println("error")
 		return
 	}
 
-	// Сохраняем изменения в БД
-	for _, change := range request.Changes {
+	fmt.Println(req)
+
+	// Сохраняем изменения в ячейках (оценки/посещаемость)
+	for _, change := range req.ActionChanges {
+
 		var action models.Action
 
-		result := config.DB.Where("id_student = ? AND id_lesson = ?",
-			change.StudentID, change.LessonID).First(&action)
-
-		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			slog.Error("Ошибка поиска записи", "error", result.Error)
-			continue
-		}
+		result := config.DB.Where(
+			"id_student = ? AND id_lesson = ?",
+			change.StudentID,
+			change.LessonID,
+		).First(&action)
 
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			// Создаём новую запись
 			action = models.Action{
 				StudentID: change.StudentID,
 				LessonID:  change.LessonID,
 			}
+		} else if result.Error != nil {
+			slog.Error("DB error", "error", result.Error)
+			continue
 		}
 
-		// Обновляем поля
-		if change.Grade != nil {
-			action.Grade = *change.Grade
+		// ОЦЕНКА
+		if change.Grade != 0 {
+			action.Grade = change.Grade
 		}
-		if change.Attendance != nil {
-			action.Attendance = parseAttendance(*change.Attendance)
+
+		// ПОСЕЩАЕМОСТЬ
+		if change.Attendance != 0 {
+			action.Attendance = models.AttendanceType(change.Attendance)
+		}
+
+		// ОЧИСТКА (если оба 0)
+		if change.Grade == 0 && change.Attendance == 0 {
+			action.Grade = 0
+			action.Attendance = 0
 		}
 
 		config.DB.Save(&action)
 	}
 
+	// Сохраняем изменения в уроках (описание)
+	for _, change := range req.LessonChanges {
+		result := config.DB.Model(&models.Lesson{}).
+			Where("id = ?", change.LessonID).
+			Update("description", change.Description)
+
+		if result.Error != nil {
+			slog.Error("Failed to update lesson description",
+				"lesson_id", change.LessonID,
+				"error", result.Error)
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-		"message": "Журнал сохранён",
-	})
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 }
 
-func parseAttendance(s string) models.AttendanceType {
-	switch s {
+func mapAttendance(attendance string) int {
+	switch attendance {
 	case "Я":
-		return models.Present
+		return 0
 	case "Н":
-		return models.Absent
+		return 1
 	case "Б":
-		return models.Sick
+		return 2
 	case "ДО":
-		return models.DO
+		return 3
 	default:
-		return models.Present
+		return 0
 	}
 }

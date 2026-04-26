@@ -68,6 +68,8 @@ func main() {
 	http.HandleFunc("/teacher/disciplines_part_group/", handlers.TeacherDisciplinesPartGroupHandler)
 	http.HandleFunc("/teacher/disciplines_part_table/", handlers.TeacherDisciplinesPartTableHandler)
 
+	http.HandleFunc("/update_journal/", handlers.UpdateJournalHandler)
+
 	// 4. Раздача статики (CSS, JS, картинки)
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
