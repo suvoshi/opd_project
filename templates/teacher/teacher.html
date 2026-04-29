@@ -26,9 +26,17 @@
                     hx-swap="innerHTML">
                 🧾 Доска объявлений
             </button>
-            
+
             <button class="text-button-alt"
                     id="btn-second"
+                    hx-get="/teacher/personal_account" 
+                    hx-target="#main-content"
+                    hx-swap="innerHTML">
+                🤡 Личный кабинет
+            </button>
+            
+            <button class="text-button-alt"
+                    id="btn-third"
                     hx-get="/teacher/schedule"
                     hx-target="#main-content"
                     hx-swap="innerHTML">
@@ -36,7 +44,7 @@
             </button>
 
             <button class="text-button-alt"
-                    id="btn-third"
+                    id="btn-fourth"
                     hx-get="/teacher/disciplines"
                     hx-target="#main-content"
                     hx-swap="innerHTML">

@@ -1,3 +1,64 @@
 {{define "tutor"}}
-<h1>Здесь должна быть страница куратора, подобная student.html</h1>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Электронный журнал</title>
+    <link rel="shortcut icon" href="/static/img/logo_1.jpg" type="image/x-icon">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="\static\css\style.css">
+</head>
+<body>  
+    <img src="\static\img\logo_get_full_1.png" 
+         alt="Логотип" 
+         class="photo-on-line">
+
+    <div style="margin-left: 350px; background: #014770; height: 80px; box-sizing: border-box;" >
+    </div>
+
+    <div>
+        <div>
+            <button class="text-button-alt"
+                    id="btn-first"
+                    hx-get="/tutor/dashboard" 
+                    hx-target="#main-content"
+                    hx-swap="innerHTML">
+                🧾 Доска объявлений
+            </button>
+
+            <button class="text-button-alt"
+                    id="btn-second"
+                    hx-get="/tutor/personal_account" 
+                    hx-target="#main-content"
+                    hx-swap="innerHTML">
+                🤡 Личный кабинет
+            </button>
+
+            <button class="text-button-alt"
+                    id="btn-third"
+                    hx-get="/tutor/disciplines"
+                    hx-target="#main-content"
+                    hx-swap="innerHTML">
+                📖 Дисциплины
+            </button>
+        </div>
+            
+        <div id="main-content" class="tab-content">
+            
+        </div>
+    </div>
+
+    <script>
+        let isFirstLoad = true;
+        
+        document.body.addEventListener('htmx:load', function() {
+            if (isFirstLoad) {
+                isFirstLoad = false;
+                htmx.ajax('GET', '/teacher/dashboard', {target: '#main-content', swap: 'innerHTML'});
+            }
+        });
+    </script>
+</body>
+</html>
 {{end}}

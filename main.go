@@ -37,6 +37,7 @@ func main() {
 		&models.Teacher{},
 		&models.Tutor{},
 		&models.Announcement{},
+		&models.GroupDisciplineTable{},
 	)
 
 	// 2. Загрузка шаблонов
@@ -67,6 +68,11 @@ func main() {
 	http.HandleFunc("/teacher/disciplines/", handlers.TeacherDisciplinesHandler)
 	http.HandleFunc("/teacher/disciplines_part_group/", handlers.TeacherDisciplinesPartGroupHandler)
 	http.HandleFunc("/teacher/disciplines_part_table/", handlers.TeacherDisciplinesPartTableHandler)
+
+	// 3.1.3 Для куратора
+	http.HandleFunc("/tutor/dashboard/", handlers.TutorDashboardHandler)
+	http.HandleFunc("/tutor/personal_account/", handlers.TutorPersonalAccountHandler)
+	http.HandleFunc("/tutor/disciplines/", handlers.TutorDisciplinesHandler)
 
 	http.HandleFunc("/update_journal/", handlers.UpdateJournalHandler)
 

@@ -388,8 +388,6 @@ func UpdateJournalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(req)
-
 	// Сохраняем изменения в ячейках (оценки/посещаемость)
 	for _, change := range req.ActionChanges {
 
