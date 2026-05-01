@@ -3,21 +3,12 @@
 <h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Доска объявлений</h2>
 
 <style>
-    .container-for-dashboard {
-        display: grid;
-        grid-template-columns: 35% 65%;
-        gap: 10px;
-        align-items: stretch;
-        margin-bottom: 20px;
-    }
-
     .blocks {
         background: white;
         padding: 20px;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         margin: 0;
-        min-height: 200px;
     }
 
     .day-header {
@@ -215,25 +206,22 @@
     }
 </style>
 
-<h2>Дашборд</h2>
-<div class="container-for-dashboard">
-    <div class="blocks">
-        <div class="day-header">
-            <h3 style="text-align: center; color: white;">Объявления администрации</h3>
-        </div>
-        <div class="vertical-scroll">
-            {{if .AnnouncementData}}
-                {{range .AnnouncementData}}
-                <div class="card-vertical">
-                    <div class="news-title">{{.Theme}}</div>
-                    <div class="news-date">{{.Date.Format "15:04 02.01.2006"}}</div>
-                    <div class="news-content">{{.Description}}</div>
-                </div>
-                {{end}}
-            {{else}}
-                <p style="color: #95a5a6; text-align: center; padding: 20px;">Нет объявлений</p>
+<div class="blocks">
+    <div class="day-header">
+        <h3 style="text-align: center; color: white;">Объявления администрации</h3>
+    </div>
+    <div class="vertical-scroll">
+        {{if .AnnouncementData}}
+            {{range .AnnouncementData}}
+            <div class="card-vertical">
+                <div class="news-title">{{.Theme}}</div>
+                <div class="news-date">{{.Date.Format "15:04 02.01.2006"}}</div>
+                <div class="news-content">{{.Description}}</div>
+            </div>
             {{end}}
-        </div>
+        {{else}}
+            <p style="color: #95a5a6; text-align: center; padding: 20px;">Нет объявлений</p>
+        {{end}}
     </div>
 </div>
 {{end}}

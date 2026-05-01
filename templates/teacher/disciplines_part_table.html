@@ -1,193 +1,110 @@
 {{define "teacher_disciplines_part_table"}}
-<!DOCTYPE html>
-<html lang="ru">
+
 <head>
-<meta charset="UTF-8">
-<title>Журнал - {{.Discipline.Name}}</title>
-
-<style>
-body{font-family:Arial;background:#eef2f6;padding:20px}
-
-.top-nav{
- background:#014770;color:#fff;padding:14px;
- border-radius:10px;margin-bottom:15px;
- display:flex;gap:10px;align-items:center
-}
-
-.back-btn{
- background:rgba(255,255,255,.2);
- border:none;color:#fff;
- padding:8px 14px;border-radius:6px;cursor:pointer
-}
-
-.btn-save{
- background:#014770;color:#fff;
- padding:10px 20px;border:none;
- border-radius:8px;cursor:pointer;margin-bottom:15px
-}
-
-.table-wrapper{overflow:auto;max-height:70vh}
-
-table{border-collapse:collapse;width:100%;background:#fff}
-
-th,td{
- border:1px solid #ddd;
- padding:6px;
- text-align:center;
- font-size:13px
-}
-
-th{position:sticky;top:0;background:#eaf1fb;z-index:2}
-
-.student-cell{
- position:sticky;left:0;background:#fff;
- text-align:left;min-width:220px
-}
-
-.lesson-box{
- display:flex;
- flex-direction:column;
- gap:4px;
- align-items:center;
-}
-
-.lesson-input{
- width:90px;
- font-size:12px;
- text-align:center;
-}
-
-.grade-cell{
- cursor:pointer;
-}
-
-.grade-cell:hover{
- background-color:#f0f0f0;
-}
-
-.final-cell{font-weight:bold;background:#f7f9fb}
-
-.grade-5{background:#e8f5e9}
-.grade-4{background:#e3f2fd}
-.grade-3{background:#fff3e0}
-.grade-2{background:#ffebee}
-
-.att-Я{background:#e8f5e9}
-.att-Н{background:#ffebee}
-.att-Б{background:#fff8e1}
-.att-ДО{background:#f3e5f5}
-
-.modal{
- display:none;
- position:fixed;inset:0;
- background:rgba(0,0,0,.5);
- z-index:1000;
-}
-
-.modal-content{
- background:#fff;
- width:320px;
- margin:10% auto;
- padding:20px;
- border-radius:12px;
- text-align:center
-}
-
-.btn{padding:8px 12px;margin:5px;border:none;border-radius:6px;cursor:pointer}
-.btn:hover{opacity:0.8}
-
-</style>
+    <meta charset="UTF-8">
 </head>
 
 <body>
+    <h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Дисциплины</h2>
 
 <div class="top-nav">
-<button class="back-btn"
-hx-post="/teacher/disciplines_part_group/"
-hx-target="#disciplines-container-group"
-hx-vals='js:{"id_group":"{{.Group.ID}}","id_discipline":"{{.Discipline.ID}}"}'>
+    <button class="back-btn"
+        hx-post="/teacher/disciplines_part_group/"
+        hx-target="#disciplines-container-group"
+        hx-vals='js:{"id_group":"{{.Group.ID}}","id_discipline":"{{.Discipline.ID}}"}'>
+        ← Назад
+    </button>
+    <h1>Журнал по предмету "{{.Discipline.Name}}"</h1>
+</div>
 
-← Назад
+<button id="saveBtn" class="btn btn-save">
+    Сохранить
 </button>
-<h2>Журнал {{.Discipline.Name}}</h2>
-</div>
 
-<button id="saveBtn" class="btn-save">💾 Сохранить</button>
+<div class="card">
+    <div class="table-wrapper">
+        <table border="0" cellpadding="8" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Ф.И.О. обучающихся</th>
+                    {{range .Lessons}}
+                    <th>
+                    <div class="lesson-box">
+                        <input class="lesson-input" data-lesson="{{.ID}}" value="{{.Description}}">
+                        <small>{{.DateBegin.Format "15:04"}}</small>
+                        <small>{{.DateBegin.Format "02.01"}}</small>
+                    </div>
+                    </th>
+                    {{end}}
+                    <th>Средний балл</th>
+                </tr>
+            </thead>
 
-<div class="table-wrapper">
-<table border="1" cellpadding="8" cellspacing="0">
-<thead>
-<tr>
-<th>№</th>
-<th>Студент</th>
-{{range .Lessons}}
-<th>
-<div class="lesson-box">
-<input class="lesson-input" data-lesson="{{.ID}}" value="{{.Description}}">
-<small>{{.DateBegin.Format "15:04"}}</small>
-<small>{{.DateBegin.Format "02.01"}}</small>
-</div>
-</th>
-{{end}}
-<th>Средний</th>
-</tr>
-</thead>
+            <tbody>
+                {{range $i, $student := .Students}}
+                {{$row := index $.Actions $i}}
+                <tr style="text-align: center;" data-student-id="{{$student.ID}}" data-row-index="{{$i}}">
+                    <td class="number">{{add $i 1}}</td>
+                    <td class="student-cell">{{$student.LastName}} {{$student.FirstName}} {{$student.Patronymic}}</td>
 
-<tbody>
-{{range $i, $student := .Students}}
-{{$row := index $.Actions $i}}
-<tr data-student-id="{{$student.ID}}" data-row-index="{{$i}}">
-<td>{{add $i 1}}</td>
-<td class="student-cell">{{$student.LastName}} {{$student.FirstName}} {{$student.Patronymic}}</td>
+                    {{range $j, $lesson := $.Lessons}}
+                    {{$action := index $row $j}}
+                    <td class="grade-cell 
+                        {{if ne $action.Grade 0}}grade-{{$action.Grade}}{{end}}
+                        {{if and (eq $action.Grade 0) (eq $action.Attendance 1)}}att-Я{{end}}
+                        {{if and (eq $action.Grade 0) (eq $action.Attendance 2)}}att-Н{{end}}
+                        {{if and (eq $action.Grade 0) (eq $action.Attendance 3)}}att-Б{{end}}
+                        {{if and (eq $action.Grade 0) (eq $action.Attendance 4)}}att-ДО{{end}}"
+                        data-student-id="{{$student.ID}}"
+                        data-lesson-id="{{$lesson.ID}}"
+                        data-grade="{{$action.Grade}}"
+                        data-attendance="{{$action.Attendance}}"
+                        onclick="window.currentCell=this; document.getElementById('modal').style.display='block'">
+                        
+                        {{if ne $action.Grade 0}}
+                            {{$action.Grade}}
+                        {{else if eq $action.Attendance 1}}Я
+                        {{else if eq $action.Attendance 2}}Н
+                        {{else if eq $action.Attendance 3}}Б
+                        {{else if eq $action.Attendance 4}}ДО
+                        {{else}}—
+                        {{end}}
+                    </td>
+                    {{end}}
 
-{{range $j, $lesson := $.Lessons}}
-{{$action := index $row $j}}
-<td class="grade-cell 
-    {{if ne $action.Grade 0}}grade-{{$action.Grade}}{{end}}
-    {{if and (eq $action.Grade 0) (eq $action.Attendance 1)}}att-Я{{end}}
-    {{if and (eq $action.Grade 0) (eq $action.Attendance 2)}}att-Н{{end}}
-    {{if and (eq $action.Grade 0) (eq $action.Attendance 3)}}att-Б{{end}}
-    {{if and (eq $action.Grade 0) (eq $action.Attendance 4)}}att-ДО{{end}}"
-    data-student-id="{{$student.ID}}"
-    data-lesson-id="{{$lesson.ID}}"
-    data-grade="{{$action.Grade}}"
-    data-attendance="{{$action.Attendance}}"
-    onclick="window.currentCell=this; document.getElementById('modal').style.display='block'">
-    
-    {{if ne $action.Grade 0}}
-        {{$action.Grade}}
-    {{else if eq $action.Attendance 1}}Я
-    {{else if eq $action.Attendance 2}}Н
-    {{else if eq $action.Attendance 3}}Б
-    {{else if eq $action.Attendance 4}}ДО
-    {{else}}—
-    {{end}}
-</td>
-{{end}}
-
-<td class="final-cell" data-final="0">—</td>
-</tr>
-{{end}}
-</tbody>
-</table>
+                    <td class="final-cell" data-final="0">—</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- MODAL -->
 <div id="modal" class="modal">
-<div class="modal-content">
-<h3>Оценка</h3>
-<button class="btn" onclick="setGrade(5)">5</button>
-<button class="btn" onclick="setGrade(4)">4</button>
-<button class="btn" onclick="setGrade(3)">3</button>
-<button class="btn" onclick="setGrade(2)">2</button>
-<h3>Посещаемость</h3>
-<button class="btn" onclick="setAttendance(1)">Я</button>
-<button class="btn" onclick="setAttendance(2)">Н</button>
-<button class="btn" onclick="setAttendance(3)">Б</button>
-<button class="btn" onclick="setAttendance(4)">ДО</button>
-<button class="btn" onclick="clearCell()">Очистить</button>
-<button class="btn" onclick="closeModal()">Закрыть</button>
-</div>
+    <div class="modal-content">
+        <h3>Оценка</h3>
+        <div class="grade-row">
+            <button class="btn btn-5" onclick="setGrade(5)">5</button>
+            <button class="btn btn-4" onclick="setGrade(4)">4</button>
+            <button class="btn btn-3" onclick="setGrade(3)">3</button>
+            <button class="btn btn-2" onclick="setGrade(2)">2</button>
+        </div>
+
+        <h3>Посещаемость</h3>
+        <div class="attendance-row">
+            <button class="btn btn-я" onclick="setAttendance(1)">Я</button>
+            <button class="btn btn-н" onclick="setAttendance(2)">Н</button>
+            <button class="btn btn-б" onclick="setAttendance(3)">Б</button>
+            <button class="btn btn-до" onclick="setAttendance(4)">ДО</button>
+        </div>
+
+        <div class="action-row">
+            <button class="btn btn-bottom" onclick="clearCell()">Очистить</button>
+            <button class="btn btn-bottom" onclick="closeModal()">Закрыть</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -337,5 +254,218 @@ document.getElementById('saveBtn').onclick = saveData;
 </script>
 
 </body>
-</html>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        .top-nav{
+            background:#014770;
+            color:#fff;
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display:flex;
+            gap: 10px;
+            align-items:center;
+        }
+
+        .back-btn{
+            background:rgba(255,255,255,.2);
+            border:none;color:#fff;
+            padding:8px 14px;
+            border-radius:6px;
+            cursor:pointer;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .btn-save {
+            background: #014770d0;
+            color: #fff;
+            margin-top: 20px;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59,125,216,0.4);
+        }
+
+        .btn-5 { color: #2e7d32; background: #c8e6c9 !important; margin-bottom: 5px;}
+        .btn-4 { color: #2e7d32; background: #e8f5e9 !important; margin-bottom: 5px;}
+        .btn-3 { color: #e65100; background: #fff3e0 !important; margin-bottom: 5px;}
+        .btn-2 { color: #c62828; background: #ffebee !important; margin-bottom: 5px;}
+
+        .btn-я { color: #2e7d32; background: #e8f5e9 !important; margin-bottom: 5px;}
+        .btn-н { color: #c62828; background: #ffebee !important; margin-bottom: 5px;}
+        .btn-б { color: #1565c0; background: #e3f2fd !important; margin-bottom: 5px;}
+        .btn-до { color: #6a1b9a; background: #f3e5f5 !important; margin-bottom: 5px;}
+
+        .btn-bottom {
+            margin-bottom: 5px;
+        }
+
+        .card {
+            border-radius: 16px;
+            overflow: hidden;
+            margin-top: 0px;
+        }
+
+        .table-wrapper {
+            overflow: auto;
+            max-height: 70vh;
+            border-radius: 16px;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        th:first-child {
+            border-top-left-radius: 16px;
+        }
+
+        th:last-child {
+            border-top-right-radius: 16px;
+        }
+
+        tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 16px;
+        }
+
+        tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 16px;
+        }
+
+        tbody tr:nth-child(even) td.number {
+            background: #fafbfd6a;
+        }
+
+        tbody tr:nth-child(even) td.student-cell {
+            background: #fafbfd6a;
+        }
+        
+        tbody tr:nth-child(even) td.grade-cell {
+            background: #fafbfd6a;
+        }
+        
+        tbody tr:nth-child(even) td.final-cell {
+            background: #fafbfd6a;
+        }
+        
+        tbody td {
+            border: 1px solid #e2e8f0;
+        }
+
+        .number {
+            text-align: center;
+        }
+
+        .student-cell{
+            position:sticky;
+            left:0;
+            text-align:left;
+            min-width:220px;
+        }
+
+        .lesson-box{
+            display:flex;
+            flex-direction:column;
+            gap:4px;
+            align-items:center;
+        }
+
+        .lesson-input{
+            min-width:90px;
+            font-size:12px;
+            text-align:center;
+        }
+
+        .grade-cell{
+            cursor:pointer;
+        }
+
+        .grade-cell:hover{
+            background-color:#f0f0f0;
+        }
+
+        .final-cell{
+            font-weight:bold;
+            background:#f7f9fb
+        }
+
+        .grade-5{background:#e8f5e9}
+        .grade-4{background:#e3f2fd}
+        .grade-3{background:#fff3e0}
+        .grade-2{background:#ffebee}
+
+        .att-Я{background:#e8f5e9}
+        .att-Н{background:#ffebee}
+        .att-Б{background:#fff8e1}
+        .att-ДО{background:#f3e5f5}
+
+        .modal{
+            display:none;
+            position:fixed;inset:0;
+            background:rgba(0,0,0,.5);
+            z-index:1000;
+        }
+
+        .modal-content {
+            background: #fff;
+            width: 320px;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        /* Ряд с оценками (4 кнопки в строку) */
+        .grade-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        /* Ряд с посещаемостью (4 кнопки в строку) */
+        .attendance-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        /* Ряд с кнопками очистить и закрыть */
+        .action-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .modal-content h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+
+        .modal-content .btn {
+            flex: 1;
+            margin: 0;
+        }
+    </style>
 {{end}}
