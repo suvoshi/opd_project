@@ -5,7 +5,8 @@
 </head>
 
 <body>
-    <h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Дисциплины</h2>
+
+<h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Дисциплины</h2>
 
 <div class="top-nav">
     <button class="back-btn"
@@ -30,11 +31,11 @@
                     <th>Ф.И.О. обучающихся</th>
                     {{range .Lessons}}
                     <th>
-                    <div class="lesson-box">
-                        <input class="lesson-input" data-lesson="{{.ID}}" value="{{.Description}}">
-                        <small>{{.DateBegin.Format "15:04"}}</small>
-                        <small>{{.DateBegin.Format "02.01"}}</small>
-                    </div>
+                        <div class="lesson-box">
+                            <input class="lesson-input" data-lesson="{{.ID}}" value="{{.Description}}">
+                            <small>{{.DateBegin.Format "15:04"}}</small>
+                            <small>{{.DateBegin.Format "02.01"}}</small>
+                        </div>
                     </th>
                     {{end}}
                     <th>Средний балл</th>
@@ -108,152 +109,153 @@
 </div>
 
 <script>
-window.currentCell = null;
-
-function setGrade(value) {
-    let cell = window.currentCell;
-    if (!cell) return;
-    
-    cell.setAttribute('data-grade', value);
-    cell.setAttribute('data-attendance', '0');
-    cell.textContent = value;
-    
-    cell.classList.remove('grade-5', 'grade-4', 'grade-3', 'grade-2', 'att-Я', 'att-Н', 'att-Б', 'att-ДО');
-    cell.classList.add('grade-' + value);
-    
-    recalcAverage();
-    closeModal();
-}
-
-function setAttendance(value) {
-    let cell = window.currentCell;
-    if (!cell) return;
-    
-    let map = {1: 'Я', 2: 'Н', 3: 'Б', 4: 'ДО'};
-    
-    cell.setAttribute('data-attendance', value);
-    cell.setAttribute('data-grade', '0');
-    cell.textContent = map[value];
-    
-    cell.classList.remove('grade-5', 'grade-4', 'grade-3', 'grade-2', 'att-Я', 'att-Н', 'att-Б', 'att-ДО');
-    cell.classList.add('att-' + map[value]);
-    
-    recalcAverage();
-    closeModal();
-}
-
-function clearCell() {
-    let cell = window.currentCell;
-    if (!cell) return;
-    
-    cell.setAttribute('data-grade', '0');
-    cell.setAttribute('data-attendance', '0');
-    cell.textContent = '—';
-    
-    cell.classList.remove('grade-5', 'grade-4', 'grade-3', 'grade-2', 'att-Я', 'att-Н', 'att-Б', 'att-ДО');
-    
-    recalcAverage();
-    closeModal();
-}
-
-function closeModal() {
-    document.getElementById('modal').style.display = 'none';
     window.currentCell = null;
-}
 
-function recalcAverage() {
-    let rows = document.querySelectorAll('tbody tr');
-    for (let i = 0; i < rows.length; i++) {
-        let row = rows[i];
-        let cells = row.querySelectorAll('.grade-cell');
-        let sum = 0;
-        let count = 0;
+    function setGrade(value) {
+        let cell = window.currentCell;
+        if (!cell) return;
         
-        for (let j = 0; j < cells.length; j++) {
-            let grade = parseInt(cells[j].getAttribute('data-grade'));
-            if (grade > 0 && grade <= 5) {
-                sum += grade;
-                count++;
+        cell.setAttribute('data-grade', value);
+        cell.setAttribute('data-attendance', '0');
+        cell.textContent = value;
+        
+        cell.classList.remove('grade-5', 'grade-4', 'grade-3', 'grade-2', 'att-Я', 'att-Н', 'att-Б', 'att-ДО');
+        cell.classList.add('grade-' + value);
+        
+        recalcAverage();
+        closeModal();
+    }
+
+    function setAttendance(value) {
+        let cell = window.currentCell;
+        if (!cell) return;
+        
+        let map = {1: 'Я', 2: 'Н', 3: 'Б', 4: 'ДО'};
+        
+        cell.setAttribute('data-attendance', value);
+        cell.setAttribute('data-grade', '0');
+        cell.textContent = map[value];
+        
+        cell.classList.remove('grade-5', 'grade-4', 'grade-3', 'grade-2', 'att-Я', 'att-Н', 'att-Б', 'att-ДО');
+        cell.classList.add('att-' + map[value]);
+        
+        recalcAverage();
+        closeModal();
+    }
+
+    function clearCell() {
+        let cell = window.currentCell;
+        if (!cell) return;
+        
+        cell.setAttribute('data-grade', '0');
+        cell.setAttribute('data-attendance', '0');
+        cell.textContent = '—';
+        
+        cell.classList.remove('grade-5', 'grade-4', 'grade-3', 'grade-2', 'att-Я', 'att-Н', 'att-Б', 'att-ДО');
+        
+        recalcAverage();
+        closeModal();
+    }
+
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+        window.currentCell = null;
+    }
+
+    function recalcAverage() {
+        let rows = document.querySelectorAll('tbody tr');
+        for (let i = 0; i < rows.length; i++) {
+            let row = rows[i];
+            let cells = row.querySelectorAll('.grade-cell');
+            let sum = 0;
+            let count = 0;
+            
+            for (let j = 0; j < cells.length; j++) {
+                let grade = parseInt(cells[j].getAttribute('data-grade'));
+                if (grade > 0 && grade <= 5) {
+                    sum += grade;
+                    count++;
+                }
+            }
+            
+            let finalCell = row.querySelector('.final-cell');
+            if (count > 0) {
+                let avg = (sum / count).toFixed(2);
+                finalCell.textContent = avg;
+            } else {
+                finalCell.textContent = '—';
             }
         }
+    }
+
+    function buildPayload() {
+        let changes = [];
+        let cells = document.querySelectorAll('.grade-cell');
         
-        let finalCell = row.querySelector('.final-cell');
-        if (count > 0) {
-            let avg = (sum / count).toFixed(2);
-            finalCell.textContent = avg;
-        } else {
-            finalCell.textContent = '—';
+        for (let i = 0; i < cells.length; i++) {
+            let cell = cells[i];
+            changes.push({
+                student_id: parseInt(cell.getAttribute('data-student-id')),
+                lesson_id: parseInt(cell.getAttribute('data-lesson-id')),
+                grade: parseInt(cell.getAttribute('data-grade')),
+                attendance: parseInt(cell.getAttribute('data-attendance'))
+            });
+        }
+        
+        let lessonChanges = [];
+        let inputs = document.querySelectorAll('.lesson-input');
+        for (let i = 0; i < inputs.length; i++) {
+            lessonChanges.push({
+                lesson_id: parseInt(inputs[i].getAttribute('data-lesson')),
+                description: inputs[i].value
+            });
+        }
+        
+        return {
+            id_group: {{.Group.ID}},
+            id_discipline: {{.Discipline.ID}},
+            actionChanges: changes,
+            lessonChanges: lessonChanges,
+        };
+    }
+
+    async function saveData() {
+        let btn = document.getElementById('saveBtn');
+        let oldText = btn.textContent;
+        btn.textContent = 'Сохранение...';
+        btn.disabled = true;
+        
+        try {
+            let response = await fetch('/update_journal/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(buildPayload())
+            });
+            
+            let result = await response.json();
+            
+            if (result.success) {
+                alert('Сохранено!');
+            } else {
+                alert('Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+            }
+        } catch (err) {
+            alert('Ошибка: ' + err.message);
+        } finally {
+            btn.textContent = oldText;
+            btn.disabled = false;
         }
     }
-}
 
-function buildPayload() {
-    let changes = [];
-    let cells = document.querySelectorAll('.grade-cell');
-    
-    for (let i = 0; i < cells.length; i++) {
-        let cell = cells[i];
-        changes.push({
-            student_id: parseInt(cell.getAttribute('data-student-id')),
-            lesson_id: parseInt(cell.getAttribute('data-lesson-id')),
-            grade: parseInt(cell.getAttribute('data-grade')),
-            attendance: parseInt(cell.getAttribute('data-attendance'))
-        });
-    }
-    
-    let lessonChanges = [];
-    let inputs = document.querySelectorAll('.lesson-input');
-    for (let i = 0; i < inputs.length; i++) {
-        lessonChanges.push({
-            lesson_id: parseInt(inputs[i].getAttribute('data-lesson')),
-            description: inputs[i].value
-        });
-    }
-    
-    return {
-        id_group: {{.Group.ID}},
-        id_discipline: {{.Discipline.ID}},
-        actionChanges: changes,
-        lessonChanges: lessonChanges
-    };
-}
+    setTimeout(function() {
+        recalcAverage();
+    }, 100);
 
-async function saveData() {
-    let btn = document.getElementById('saveBtn');
-    let oldText = btn.textContent;
-    btn.textContent = 'Сохранение...';
-    btn.disabled = true;
-    
-    try {
-        let response = await fetch('/update_journal/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(buildPayload())
-        });
-        
-        let result = await response.json();
-        
-        if (result.success) {
-            alert('Сохранено!');
-        } else {
-            alert('Ошибка: ' + (result.error || 'Неизвестная ошибка'));
-        }
-    } catch (err) {
-        alert('Ошибка: ' + err.message);
-    } finally {
-        btn.textContent = oldText;
-        btn.disabled = false;
-    }
-}
-
-setTimeout(function() {
-    recalcAverage();
-}, 100);
-
-document.getElementById('saveBtn').onclick = saveData;
+    document.getElementById('saveBtn').onclick = saveData;
 </script>
 
 </body>
+
 <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -434,7 +436,6 @@ document.getElementById('saveBtn').onclick = saveData;
             text-align: center;
         }
 
-        /* Ряд с оценками (4 кнопки в строку) */
         .grade-row {
             display: flex;
             gap: 8px;
@@ -442,7 +443,6 @@ document.getElementById('saveBtn').onclick = saveData;
             margin-bottom: 15px;
         }
 
-        /* Ряд с посещаемостью (4 кнопки в строку) */
         .attendance-row {
             display: flex;
             gap: 8px;
@@ -450,7 +450,6 @@ document.getElementById('saveBtn').onclick = saveData;
             margin-bottom: 15px;
         }
 
-        /* Ряд с кнопками очистить и закрыть */
         .action-row {
             display: flex;
             gap: 8px;

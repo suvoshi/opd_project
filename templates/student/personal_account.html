@@ -23,7 +23,7 @@
 <h1 style="margin-top: 75px;">Моя группа</h1>
 <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding-top: 5px; padding-bottom: 5px;">
-    <table cellpadding="8" cellspacing="0" style="border-collapse: collapse; table-layout: auto;">
+    <table cellpadding="8" cellspacing="0" class="table-wrapper">
         <thead>
             <tr>
                 <th>Ф.И.О.</th>
@@ -44,5 +44,57 @@
         </tbody>
     </table>
 </div>
+
+<style>
+    .table-wrapper {
+            overflow: auto;
+            max-height: 70vh;
+            border-radius: 16px;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        th:first-child {
+            border-top-left-radius: 16px;
+        }
+
+        th:last-child {
+            border-top-right-radius: 16px;
+        }
+
+        tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 16px;
+        }
+
+        tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 16px;
+        }
+
+        tbody tr:nth-child(even) td.number {
+            background: #fafbfd6a;
+        }
+
+        tbody tr:nth-child(even) td.student-cell {
+            background: #fafbfd6a;
+        }
+        
+        tbody tr:nth-child(even) td.grade-cell {
+            background: #fafbfd6a;
+        }
+        
+        tbody tr:nth-child(even) td.final-cell {
+            background: #fafbfd6a;
+        }
+        
+        tbody td {
+            border: 1px solid #e2e8f0;
+        }
+</style>
 
 {{end}}
