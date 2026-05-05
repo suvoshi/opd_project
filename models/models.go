@@ -173,8 +173,9 @@ type Announcement struct {
 
 type GroupDisciplineTable struct {
 	ID                int `gorm:"primaryKey"`
-	GroupDisciplineID int `gorm:"not null"`
+	GroupDisciplineID int `gorm:"column:id_group_discipline;not null"`
 	// Тот, кто последний редактировал
-	UserID   int
-	LastEdit time.Time
+	UserID    int
+	LastEdit  time.Time
+	IsEditing int
 }

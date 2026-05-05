@@ -72,7 +72,6 @@ func main() {
 	// 3.1.3 Для куратора
 	http.HandleFunc("/tutor/dashboard/", handlers.TutorDashboardHandler)
 	http.HandleFunc("/tutor/personal_account/", handlers.TutorPersonalAccountHandler)
-	http.HandleFunc("/tutor/disciplines/", handlers.TutorDisciplinesHandler)
 
 	http.HandleFunc("/update_journal/", handlers.UpdateJournalHandler)
 

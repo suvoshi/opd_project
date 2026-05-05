@@ -202,39 +202,68 @@ func TeacherDisciplinesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// находим учителя
 	var session models.Session
 	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 		return
 	}
-	slog.Info("TeacherDisciplinesHandler - Пытаемся найти учителя", "id_user", session.UserID)
-	var teacher models.Teacher
-	result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", errorServerSide)
-		return
-	}
-
+	slog.Info("TeacherDisciplinesHandler - Пытаемся найти пользователя", "id_user", session.UserID)
 	data := TeacherDisciplinesData{}
-
-	result = config.DB.
-		Table("group_disciplines").
-		Where("id_teacher = ?", teacher.ID).
-		Group("id_discipline").
-		Select(`
+	switch session.UserID {
+	case int(models.RoleTeacher):
+		var teacher models.Teacher
+		result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+		slog.Info("TeacherDisciplinesHandler - Нашли учителя", "id_user", session.UserID)
+		result = config.DB.
+			Table("group_disciplines").
+			Where("id_teacher = ?", teacher.ID).
+			Group("id_discipline").
+			Select(`
         MIN(id) as id,
         MIN(id_group) as id_group,
         id_teacher,
         id_discipline
     `).
-		Preload("Discipline").
-		Find(&data.GroupDisciplines)
-	if result.Error != nil {
+			Preload("Discipline").
+			Find(&data.GroupDisciplines)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+
+	case int(models.RoleTutor):
+		var tutor models.Tutor
+		result = config.DB.Where("id_user = ?", session.UserID).First(&tutor)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+		slog.Info("TeacherDisciplinesHandler - Нашли куратора", "id_user", session.UserID)
+		result = config.DB.
+			Table("group_disciplines").
+			Group("id_discipline").
+			Select(`
+        MIN(id) as id,
+        MIN(id_group) as id_group,
+        id_teacher,
+        id_discipline
+    `).
+			Preload("Discipline").
+			Find(&data.GroupDisciplines)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+	default:
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 		return
 	}
+
 	templates.ExecuteTemplate(w, "teacher_disciplines", data)
 	slog.Info("TeacherDisciplinesHandler - Успешно", "id_user", session.UserID)
 }
@@ -251,30 +280,54 @@ func TeacherDisciplinesPartGroupHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// находим учителя
 	var session models.Session
 	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 		return
 	}
-	slog.Info("TeacherDisciplinesPartGroupHandler - Пытаемся найти учителя", "id_user", session.UserID)
-	var teacher models.Teacher
-	result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", errorServerSide)
-		return
-	}
-
-	id_disc, _ := strconv.Atoi(r.FormValue("id_discipline"))
-
+	slog.Info("TeacherDisciplinesPartGroupHandler - Пытаемся найти пользователя", "id_user", session.UserID)
 	data := TeacherDisciplinesPartGroupData{}
-	result = config.DB.
-		Preload("Group").
-		Preload("Discipline").
-		Where("id_teacher = ? AND id_discipline = ?", teacher.ID, id_disc).
-		Find(&data.GroupDisciplines)
-	if result.Error != nil {
+	switch session.UserID {
+	case int(models.RoleTeacher):
+		var teacher models.Teacher
+		result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+		slog.Info("TeacherDisciplinesPartGroupHandler - Нашли учителя", "id_user", session.UserID)
+		id_disc, _ := strconv.Atoi(r.FormValue("id_discipline"))
+
+		result = config.DB.
+			Preload("Group").
+			Preload("Discipline").
+			Where("id_teacher = ? AND id_discipline = ?", teacher.ID, id_disc).
+			Find(&data.GroupDisciplines)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+	case int(models.RoleTutor):
+		var tutor models.Tutor
+		result = config.DB.Where("id_user = ?", session.UserID).First(&tutor)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+		slog.Info("TeacherDisciplinesPartGroupHandler - Нашли куратора", "id_user", session.UserID)
+		id_disc, _ := strconv.Atoi(r.FormValue("id_discipline"))
+
+		result = config.DB.
+			Preload("Group").
+			Preload("Discipline").
+			Where("id_discipline = ?", id_disc).
+			Find(&data.GroupDisciplines)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+	default:
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 		return
 	}
@@ -296,67 +349,134 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// находим учителя
 	var session models.Session
 	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
 	if result.Error != nil {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 		return
 	}
-	slog.Info("TeacherDisciplinesPartTableHandler - Пытаемся найти учителя", "id_user", session.UserID)
-	var teacher models.Teacher
-	result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", errorServerSide)
-		return
-	}
-
-	id_group, _ := strconv.Atoi(r.FormValue("id_group"))
-	id_discipline, _ := strconv.Atoi(r.FormValue("id_discipline"))
-
-	// добавить проверку на возможность редактирования (никто другой не редактирует)
-
+	slog.Info("TeacherDisciplinesPartTableHandler - Пытаемся найти пользователя", "id_user", session.UserID)
 	data := TeacherDisciplinesPartTableData{}
-
-	result = config.DB.Where("id = ?", id_discipline).First(&data.Discipline)
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", errorServerSide)
-		return
-	}
-	result = config.DB.Where("id = ?", id_group).First(&data.Group)
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", errorServerSide)
-		return
-	}
-
-	result = config.DB.
-		Where("id_group = ?", id_group).
-		Find(&data.Students)
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", errorServerSide)
-		return
-	}
-	result = config.DB.
-		Where("id_discipline = ?", id_discipline).
-		Find(&data.Lessons)
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", errorServerSide)
-		return
-	}
-
-	data.Actions = make([][]models.Action, len(data.Students))
-	for i, student := range data.Students {
-		row := make([]models.Action, len(data.Lessons))
-		for j, lesson := range data.Lessons {
-			result = config.DB.
-				Where("id_student = ? AND id_lesson = ?", student.ID, lesson.ID).
-				Find(&row[j])
-			if result.Error != nil {
-				templates.ExecuteTemplate(w, "error", errorServerSide)
-				return
-			}
+	switch session.UserID {
+	case int(models.RoleTeacher):
+		var teacher models.Teacher
+		result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
 		}
-		data.Actions[i] = row
+		slog.Info("TeacherDisciplinesPartTableHandler - Нашли учителя", "id_user", session.UserID)
+
+		id_group, _ := strconv.Atoi(r.FormValue("id_group"))
+		id_discipline, _ := strconv.Atoi(r.FormValue("id_discipline"))
+
+		var table models.GroupDisciplineTable
+		var gd models.GroupDiscipline
+		result = config.DB.Where("id_group = ? AND id_discipline = ?", id_group, id_discipline).First(&gd)
+		result = config.DB.Where("id_group_discipline = ?", gd.ID).First(&table)
+
+		if table.IsEditing == 0 {
+			// всё хорошо, заполняем UserID и заходим в таблицу
+		} else {
+			// таблицу кто-то редактирует, выдаем соотсветствующее сообщение
+		}
+
+		result = config.DB.Where("id = ?", id_discipline).First(&data.Discipline)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+		result = config.DB.Where("id = ?", id_group).First(&data.Group)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+
+		result = config.DB.
+			Where("id_group = ?", id_group).
+			Find(&data.Students)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+		result = config.DB.
+			Where("id_discipline = ?", id_discipline).
+			Find(&data.Lessons)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+
+		data.Actions = make([][]models.Action, len(data.Students))
+		for i, student := range data.Students {
+			row := make([]models.Action, len(data.Lessons))
+			for j, lesson := range data.Lessons {
+				result = config.DB.
+					Where("id_student = ? AND id_lesson = ?", student.ID, lesson.ID).
+					Find(&row[j])
+				if result.Error != nil {
+					templates.ExecuteTemplate(w, "error", errorServerSide)
+					return
+				}
+			}
+			data.Actions[i] = row
+		}
+	case int(models.RoleTutor):
+		var tutor models.Tutor
+		result = config.DB.Where("id_user = ?", session.UserID).First(&tutor)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+		slog.Info("TeacherDisciplinesPartTableHandler - Нашли куратора", "id_user", session.UserID)
+		id_group, _ := strconv.Atoi(r.FormValue("id_group"))
+		id_discipline, _ := strconv.Atoi(r.FormValue("id_discipline"))
+
+		// добавить проверку на возможность редактирования (никто другой не редактирует)
+
+		result = config.DB.Where("id = ?", id_discipline).First(&data.Discipline)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+		result = config.DB.Where("id = ?", id_group).First(&data.Group)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+
+		result = config.DB.
+			Where("id_group = ?", id_group).
+			Find(&data.Students)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+		result = config.DB.
+			Where("id_discipline = ?", id_discipline).
+			Find(&data.Lessons)
+		if result.Error != nil {
+			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+
+		data.Actions = make([][]models.Action, len(data.Students))
+		for i, student := range data.Students {
+			row := make([]models.Action, len(data.Lessons))
+			for j, lesson := range data.Lessons {
+				result = config.DB.
+					Where("id_student = ? AND id_lesson = ?", student.ID, lesson.ID).
+					Find(&row[j])
+				if result.Error != nil {
+					templates.ExecuteTemplate(w, "error", errorServerSide)
+					return
+				}
+			}
+			data.Actions[i] = row
+		}
+	default:
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
 	}
 
 	templates.ExecuteTemplate(w, "teacher_disciplines_part_table", data)
