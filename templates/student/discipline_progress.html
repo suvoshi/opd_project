@@ -2,13 +2,6 @@
 
 <h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Дисциплины</h2>
 
-<div class="student-card left" style="padding-top: 5px; padding-bottom: 5px;">
-    <h3>Информация о кураторе:</h3>
-    <p>Ф.И.О.: </p>
-    <p>Номер телефона: </p>
-    <p>Электронная почта: </p>
-</div>
-
 <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 margin-top: 20px; padding-top: 5px; padding-bottom: 5px;">
     <table cellpadding="8" cellspacing="0" class="table-wrapper">
@@ -30,13 +23,16 @@ margin-top: 20px; padding-top: 5px; padding-bottom: 5px;">
                 <td></td>
                 <td>{{.Discipline.Hours}}</td>
                 <td style="white-space: nowrap;">
-                    {{range $index, $action := .Actions}}
-                        
-                    {{if $index}}, {{end}}
-                        <strong>{{$action.Grade}}</strong>
-                    {{else}}
-                        <em>Нет оценок</em>
-                    {{end}}
+                    {{$first := true}}
+{{range .Actions}}
+    {{if ne .Grade 0}}
+        {{if not $first}}, {{end}}
+        <strong>{{.Grade}}</strong>
+        {{$first = false}}
+    {{end}}
+{{else}}
+    <em>Нет оценок</em>
+{{end}}
                 </td>
                 <td>{{.FinalGrade}}</td>
             </tr>

@@ -1,0 +1,23 @@
+{{define "teacher_disciplines_err"}}
+
+<head>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+
+<h2 style="margin-left: -25px; margin-top: -90px; margin-bottom: 50px; color: rgba(255, 255, 255, 0.863);">Дисциплины</h2>
+
+<div class="top-nav">
+    <button class="back-btn"
+        hx-post="/teacher/disciplines_part_group/"
+        hx-target="#disciplines-container-group"
+        hx-vals='js:{"id_group":"{{.Group.ID}}","id_discipline":"{{.Discipline.ID}}"}'>
+        ← Назад
+    </button>
+    <h1>Журнал по предмету "{{.Discipline.Name}}"</h1>
+</div>
+
+<h3>Таблица редактируется другим пользователем, подождите.</h3>
+
+{{end}}

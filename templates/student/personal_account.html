@@ -11,12 +11,7 @@
     <div class="student-card left">
         <p>Номер учебной группы: {{ .Student.Group.GroupSign }}</p>
         <p>Дата рождения: {{ .Student.BirthDate.Format "02.01.2006" }}</p>
-        <p>Средний балл: 4.8</p>
-        <p>Размер текущей стипендии: 22800 р.</p>
-    </div>
-
-    <div class="student-card tall">
-        <h3 style="margin: 0; text-align: center;">История оценок</h3>
+        <p>Размер текущей стипендии: {{.Pay}} р.</p>
     </div>
 </div>
 

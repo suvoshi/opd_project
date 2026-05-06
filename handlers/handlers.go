@@ -141,6 +141,7 @@ func InitTemplates() {
 				"templates/teacher/disciplines.html",
 				"templates/teacher/disciplines_part_group.html",
 				"templates/teacher/disciplines_part_table.html",
+				"templates/teacher/disciplines_err.html",
 				"templates/tutor/tutor.html",
 				"templates/tutor/dashboard.html",
 				"templates/tutor/personal_account.html",

@@ -26,6 +26,7 @@ type StudentDashboardData struct {
 type StudentPersonalAccountData struct {
 	Student  models.Student
 	Students []models.Student
+	Pay      float64
 }
 
 type StudentSchedulePartData struct {
@@ -136,8 +137,9 @@ func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 		templates.ExecuteTemplate(w, "error", errorServerSide)
 		return
 	}
-
-	data := StudentPersonalAccountData{Student: student, Students: students}
+	// прописать функцию для расчета стипендии, поместить в переменную pay
+	pay := 22800.0
+	data := StudentPersonalAccountData{Student: student, Students: students, Pay: pay}
 
 	templates.ExecuteTemplate(w, "personal_account", data)
 	slog.Info("StudentPersonalAccountHandler - Успешно", "id_user", session.UserID)

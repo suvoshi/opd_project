@@ -210,8 +210,14 @@ func TeacherDisciplinesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.Info("TeacherDisciplinesHandler - Пытаемся найти пользователя", "id_user", session.UserID)
 	data := TeacherDisciplinesData{}
-	switch session.UserID {
-	case int(models.RoleTeacher):
+	var user models.User
+	result = config.DB.Where("id = ?", session.UserID).First(&user)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+	switch user.Role {
+	case models.RoleTeacher:
 		var teacher models.Teacher
 		result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
 		if result.Error != nil {
@@ -236,7 +242,7 @@ func TeacherDisciplinesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-	case int(models.RoleTutor):
+	case models.RoleTutor:
 		var tutor models.Tutor
 		result = config.DB.Where("id_user = ?", session.UserID).First(&tutor)
 		if result.Error != nil {
@@ -288,8 +294,14 @@ func TeacherDisciplinesPartGroupHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	slog.Info("TeacherDisciplinesPartGroupHandler - Пытаемся найти пользователя", "id_user", session.UserID)
 	data := TeacherDisciplinesPartGroupData{}
-	switch session.UserID {
-	case int(models.RoleTeacher):
+	var user models.User
+	result = config.DB.Where("id = ?", session.UserID).First(&user)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+	switch user.Role {
+	case models.RoleTeacher:
 		var teacher models.Teacher
 		result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
 		if result.Error != nil {
@@ -308,7 +320,7 @@ func TeacherDisciplinesPartGroupHandler(w http.ResponseWriter, r *http.Request) 
 			templates.ExecuteTemplate(w, "error", errorServerSide)
 			return
 		}
-	case int(models.RoleTutor):
+	case models.RoleTutor:
 		var tutor models.Tutor
 		result = config.DB.Where("id_user = ?", session.UserID).First(&tutor)
 		if result.Error != nil {
@@ -357,8 +369,14 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	slog.Info("TeacherDisciplinesPartTableHandler - Пытаемся найти пользователя", "id_user", session.UserID)
 	data := TeacherDisciplinesPartTableData{}
-	switch session.UserID {
-	case int(models.RoleTeacher):
+	var user models.User
+	result = config.DB.Where("id = ?", session.UserID).First(&user)
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
+	switch user.Role {
+	case models.RoleTeacher:
 		var teacher models.Teacher
 		result = config.DB.Where("id_user = ?", session.UserID).First(&teacher)
 		if result.Error != nil {
@@ -370,17 +388,6 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 		id_group, _ := strconv.Atoi(r.FormValue("id_group"))
 		id_discipline, _ := strconv.Atoi(r.FormValue("id_discipline"))
 
-		var table models.GroupDisciplineTable
-		var gd models.GroupDiscipline
-		result = config.DB.Where("id_group = ? AND id_discipline = ?", id_group, id_discipline).First(&gd)
-		result = config.DB.Where("id_group_discipline = ?", gd.ID).First(&table)
-
-		if table.IsEditing == 0 {
-			// всё хорошо, заполняем UserID и заходим в таблицу
-		} else {
-			// таблицу кто-то редактирует, выдаем соотсветствующее сообщение
-		}
-
 		result = config.DB.Where("id = ?", id_discipline).First(&data.Discipline)
 		if result.Error != nil {
 			templates.ExecuteTemplate(w, "error", errorServerSide)
@@ -389,6 +396,23 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 		result = config.DB.Where("id = ?", id_group).First(&data.Group)
 		if result.Error != nil {
 			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+
+		var table models.GroupDisciplineTable
+		var gd models.GroupDiscipline
+		result = config.DB.Where("id_group = ? AND id_discipline = ?", id_group, id_discipline).First(&gd)
+		result = config.DB.Where("id_group_discipline = ?", gd.ID).First(&table)
+
+		if table.IsEditing == 0 {
+			// всё хорошо, заполняем UserID и заходим в таблицу
+			table.IsEditing = 1
+			table.GroupDisciplineID = gd.ID
+			table.UserID = teacher.UserID
+			result = config.DB.Save(&table)
+		} else {
+			// таблицу кто-то редактирует, выдаем соотсветствующее сообщение
+			templates.ExecuteTemplate(w, "teacher_disciplines_err", data)
 			return
 		}
 
@@ -421,7 +445,7 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 			}
 			data.Actions[i] = row
 		}
-	case int(models.RoleTutor):
+	case models.RoleTutor:
 		var tutor models.Tutor
 		result = config.DB.Where("id_user = ?", session.UserID).First(&tutor)
 		if result.Error != nil {
@@ -432,8 +456,6 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 		id_group, _ := strconv.Atoi(r.FormValue("id_group"))
 		id_discipline, _ := strconv.Atoi(r.FormValue("id_discipline"))
 
-		// добавить проверку на возможность редактирования (никто другой не редактирует)
-
 		result = config.DB.Where("id = ?", id_discipline).First(&data.Discipline)
 		if result.Error != nil {
 			templates.ExecuteTemplate(w, "error", errorServerSide)
@@ -442,6 +464,23 @@ func TeacherDisciplinesPartTableHandler(w http.ResponseWriter, r *http.Request) 
 		result = config.DB.Where("id = ?", id_group).First(&data.Group)
 		if result.Error != nil {
 			templates.ExecuteTemplate(w, "error", errorServerSide)
+			return
+		}
+
+		var table models.GroupDisciplineTable
+		var gd models.GroupDiscipline
+		result = config.DB.Where("id_group = ? AND id_discipline = ?", id_group, id_discipline).First(&gd)
+		result = config.DB.Where("id_group_discipline = ?", gd.ID).First(&table)
+
+		if table.IsEditing == 0 {
+			// всё хорошо, заполняем UserID и заходим в таблицу
+			table.IsEditing = 1
+			table.GroupDisciplineID = gd.ID
+			table.UserID = tutor.UserID
+			result = config.DB.Save(&table)
+		} else {
+			// таблицу кто-то редактирует, выдаем соотсветствующее сообщение
+			templates.ExecuteTemplate(w, "teacher_disciplines_err", data)
 			return
 		}
 
