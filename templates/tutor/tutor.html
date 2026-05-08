@@ -55,7 +55,7 @@
         document.body.addEventListener('htmx:load', function() {
             if (isFirstLoad) {
                 isFirstLoad = false;
-                htmx.ajax('GET', '/teacher/dashboard', {target: '#main-content', swap: 'innerHTML'});
+                htmx.ajax('GET', '/tutor/dashboard', {target: '#main-content', swap: 'innerHTML'});
             }
         });
     </script>
