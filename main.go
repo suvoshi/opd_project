@@ -25,10 +25,10 @@ func main() {
 	// 1. Инициализация БД и таблиц
 	config.InitDB()
 	config.DB.AutoMigrate(
+		&models.Group{},
 		&models.User{},
 		&models.Student{},
 		&models.Lesson{},
-		&models.Group{},
 		&models.Discipline{},
 		&models.GroupDiscipline{},
 		&models.Action{},

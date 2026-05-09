@@ -88,8 +88,9 @@ func StudentDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result = config.DB.
-		Where("(date BETWEEN ? AND ?) AND visibility <= 0", weekAgo, now).
+		Where("visibility <= 2").
 		Order("date DESC").
+		Limit(10).
 		Find(&data.AnnouncementData)
 
 	if result.Error != nil {

@@ -73,15 +73,18 @@ func TeacherDashboardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	now := time.Now()
-	weekAgo := now.Add(-7 * 24 * time.Hour)
-
 	data := TeacherDashboardData{}
 
 	result = config.DB.
-		Where("(date BETWEEN ? AND ?) AND visibility <= 1", weekAgo, now).
+		Where("visibility <= 1").
 		Order("date DESC").
+		Limit(10).
 		Find(&data.AnnouncementData)
+
+	if result.Error != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
 
 	templates.ExecuteTemplate(w, "teacher_dashboard", data)
 	slog.Info("TeacherDashboardHandler - Успешно", "id_user", session.UserID)

@@ -13,6 +13,18 @@ import (
 	//"strconv"
 )
 
+func ComparePasswords(p1, p2 string, useBcrypt bool) error {
+	if useBcrypt {
+		return bcrypt.CompareHashAndPassword([]byte(p1), []byte(p2))
+	} else {
+		if p1 == p2 {
+			return nil
+		} else {
+			return errors.New("ComparePasswords error")
+		}
+	}
+}
+
 // HTMX хендлер для логина
 func TryLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Request") != "true" {
@@ -28,7 +40,8 @@ func TryLogin(w http.ResponseWriter, r *http.Request) {
 		templates.ExecuteTemplate(w, "error", incorrectEmailOrLogin)
 		return
 	}
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pswd))
+	// в реальном приложении использовать хэш паролей и поменять на true
+	err := ComparePasswords(user.Password, pswd, false)
 	if err != nil {
 		templates.ExecuteTemplate(w, "error", incorrectEmailOrLogin)
 		return
