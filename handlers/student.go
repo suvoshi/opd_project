@@ -88,9 +88,8 @@ func StudentDashboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result = config.DB.
-		Where("visibility <= 2").
+		Where("(date BETWEEN ? AND ?) AND visibility <= 0", weekAgo, now).
 		Order("date DESC").
-		Limit(10).
 		Find(&data.AnnouncementData)
 
 	if result.Error != nil {
@@ -139,7 +138,11 @@ func StudentPersonalAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// прописать функцию для расчета стипендии, поместить в переменную pay
-	pay := 22800.0
+	pay, err := CalculateScholarship(student.ID)
+	if err != nil {
+		templates.ExecuteTemplate(w, "error", errorServerSide)
+		return
+	}
 	data := StudentPersonalAccountData{Student: student, Students: students, Pay: pay}
 
 	templates.ExecuteTemplate(w, "personal_account", data)
@@ -301,4 +304,48 @@ func StudentDisciplineProgressHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	templates.ExecuteTemplate(w, "discipline_progress", data)
 	slog.Info("StudentDisciplineProgressHandler - Успешно", "id_user", session.UserID)
+}
+
+func CalculateScholarship(studentID int) (float64, error) {
+	var actions []models.Action
+
+	result := config.DB.Where("id_student = ?", studentID).Find(&actions)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	// Проверка прогулов
+	for _, action := range actions {
+		if action.Attendance == models.Absent {
+			return 22440, nil
+		}
+	}
+
+	// Средний балл
+	var sum float64
+	var count float64
+
+	for _, action := range actions {
+		if action.Grade > 0 {
+			sum += float64(action.Grade)
+			count++
+		}
+	}
+
+	if count == 0 {
+		return 22440, nil
+	}
+
+	avg := sum / count
+
+	switch {
+	case avg < 3.0:
+		return 22440, nil
+	case avg < 3.8:
+		return 28750, nil
+	case avg < 4.8:
+		return 30000, nil
+	default:
+		return 32750, nil
+	}
 }

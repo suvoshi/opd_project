@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"opd_project/config"
 	"opd_project/models"
 	"time"
 	//"strconv"
@@ -152,41 +151,18 @@ func InitTemplates() {
 }
 
 // Основные страницы
-// Главная страница - редирект по ролям
+// Главная страница - пока свободна
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
-	cookie, err := r.Cookie("id_session")
+	_, err := r.Cookie("id_session")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	var session models.Session
-	result := config.DB.Where("id_session = ?", cookie.Value).First(&session)
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", errorServerSide)
-		return
-	}
-
-	var user models.User
-	result = config.DB.Where("id = ?", session.UserID).First(&user)
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", errorServerSide)
-		return
-	}
-
-	switch user.Role {
-	case models.RoleStudent:
-		http.Redirect(w, r, "/student", http.StatusSeeOther)
-	case models.RoleTeacher:
-		http.Redirect(w, r, "/teacher", http.StatusSeeOther)
-	case models.RoleTutor:
-		http.Redirect(w, r, "/tutor", http.StatusSeeOther)
-	case models.RoleAdmin:
-		templates.ExecuteTemplate(w, "error", "Страница администратора не реализована")
-	}
+	templates.ExecuteTemplate(w, "index", nil)
 }
 
 // Страница авторизации

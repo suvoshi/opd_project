@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"opd_project/config"
 	"opd_project/models"
+	"time"
 	//"strconv"
 )
 
@@ -17,6 +18,10 @@ type TutorDashboardData struct {
 
 type TutorPersonalAccountData struct {
 	Tutor models.Tutor
+}
+
+type TutorDisciplinesData struct {
+	Tables []models.GroupDisciplineTable
 }
 
 // Дашборд
@@ -46,18 +51,15 @@ func TutorDashboardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	now := time.Now()
+	weekAgo := now.Add(-7 * 24 * time.Hour)
+
 	data := TutorDashboardData{}
 
 	result = config.DB.
-		Where("visibility <= 2").
+		Where("(date BETWEEN ? AND ?) AND visibility <= 2", weekAgo, now).
 		Order("date DESC").
-		Limit(10).
 		Find(&data.AnnouncementData)
-
-	if result.Error != nil {
-		templates.ExecuteTemplate(w, "error", errorServerSide)
-		return
-	}
 
 	templates.ExecuteTemplate(w, "tutor_dashboard", data)
 	slog.Info("TutorDashboardHandler - Успешно", "id_user", session.UserID)
