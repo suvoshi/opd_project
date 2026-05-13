@@ -313,6 +313,17 @@ func TeacherDisciplinesPartGroupHandler(w http.ResponseWriter, r *http.Request) 
 		}
 		slog.Info("TeacherDisciplinesPartGroupHandler - Нашли учителя", "id_user", session.UserID)
 		id_disc, _ := strconv.Atoi(r.FormValue("id_discipline"))
+		close := r.FormValue("close")
+		if close == "y" {
+			id_group, _ := strconv.Atoi(r.FormValue("id_group"))
+			var table models.GroupDisciplineTable
+			var gd models.GroupDiscipline
+			result = config.DB.Where("id_group = ? AND id_discipline = ?", id_group, id_disc).First(&gd)
+			result = config.DB.Where("id_group_discipline = ?", gd.ID).First(&table)
+			table.IsEditing = 0
+			table.LastEdit = time.Now()
+			result = config.DB.Save(&table)
+		}
 
 		result = config.DB.
 			Preload("Group").
@@ -332,6 +343,18 @@ func TeacherDisciplinesPartGroupHandler(w http.ResponseWriter, r *http.Request) 
 		}
 		slog.Info("TeacherDisciplinesPartGroupHandler - Нашли куратора", "id_user", session.UserID)
 		id_disc, _ := strconv.Atoi(r.FormValue("id_discipline"))
+
+		close := r.FormValue("close")
+		if close == "y" {
+			id_group, _ := strconv.Atoi(r.FormValue("id_group"))
+			var table models.GroupDisciplineTable
+			var gd models.GroupDiscipline
+			result = config.DB.Where("id_group = ? AND id_discipline = ?", id_group, id_disc).First(&gd)
+			result = config.DB.Where("id_group_discipline = ?", gd.ID).First(&table)
+			table.IsEditing = 0
+			table.LastEdit = time.Now()
+			result = config.DB.Save(&table)
+		}
 
 		result = config.DB.
 			Preload("Group").

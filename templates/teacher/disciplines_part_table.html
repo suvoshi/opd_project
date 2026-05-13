@@ -12,7 +12,7 @@
     <button class="back-btn"
         hx-post="/teacher/disciplines_part_group/"
         hx-target="#disciplines-container-group"
-        hx-vals='js:{"id_group":"{{.Group.ID}}","id_discipline":"{{.Discipline.ID}}"}'>
+        hx-vals='js:{"id_group":"{{.Group.ID}}","id_discipline":"{{.Discipline.ID}}","close":"y"}'>
         ← Назад
     </button>
     <h1>Журнал по предмету "{{.Discipline.Name}}"</h1>
